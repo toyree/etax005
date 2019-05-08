@@ -180,7 +180,7 @@ public class XadesBesSigner {
 	
 		log.info("signWithoutIDEnveloped");
 		FileOutputStream outputStream = new FileOutputStream(tempPath);
-		log.info("Temp file was created file" + tempPath);
+		log.info("Temp file was created file " + tempPath);
 		try {
 			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 			Document sourceDoc = dbf.newDocumentBuilder().parse(input);
@@ -213,7 +213,7 @@ public class XadesBesSigner {
 			BufferedReader reader = new BufferedReader(new InputStreamReader(signedXmlInputStream,StandardCharsets.UTF_8));
 			line = reader.readLine();
 			while(line != null) {
-				log.info(line);
+//				log.info(line);
 				buffer += line;	
 				line = reader.readLine();
 			}

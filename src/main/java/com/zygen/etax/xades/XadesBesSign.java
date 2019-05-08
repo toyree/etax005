@@ -144,4 +144,11 @@ public class XadesBesSign {
 		}
 		return outputXml;
 	}
+	
+	public String signPdf(InputStream inputPdf)throws Exception{
+		XadesBesSigner signer = new XadesBesSigner(pkTempPath);
+		String outputPdf = new String();
+		return outputPdf;
+	}
+	
 }

@@ -4,51 +4,63 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
-import javax.annotation.PostConstruct;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.stereotype.Component;
 
 import com.zygen.etax.model.ObjectFactory;
+import com.zygen.etax.model.SignPdfModel;
+import com.zygen.etax.model.SignPdfResponse;
 import com.zygen.etax.model.SignXmlModel;
 import com.zygen.etax.model.SignXmlResponse;
 import com.zygen.etax.xades.XadesBesSign;
 import com.zygen.etax.xades.XadesProperties;
 
-@Component
-@EnableConfigurationProperties({XadesProperties.class})
 public class EtaxRepository {
 
 	private static final Logger log = LoggerFactory.getLogger(EtaxRepository.class);
-	private SignXmlResponse response;
+	private SignXmlResponse signXmlResponse;
+	private SignPdfResponse signPdfResponse;
 	private ObjectFactory factory;
-	private final XadesProperties xadesProperties;
+	private XadesProperties xadesProperties;
 
-	@PostConstruct
-	public void initData() {
-		log.info("EtaxRepo initData Process");
+//	@PostConstruct
+//	public void initData() {
+//		log.info("EtaxRepo initData Process");
+//		factory = new ObjectFactory();
+//		signXmlResponse = factory.createSignXmlResponse();
+//	}
+	
+	public EtaxRepository() {
 		factory = new ObjectFactory();
-		response = factory.createSignXmlResponse();
 	}
 	
-	public EtaxRepository(XadesProperties xadesProperties) {
+	public XadesProperties getXadesProperties() {
+		return xadesProperties;
+	}
+
+	public void setXadesProperties(XadesProperties xadesProperties) {
 		this.xadesProperties = xadesProperties;
 	}
+
+	public SignXmlResponse getSignXmlResponse() {
+		return signXmlResponse;
+	}
 	
-	public SignXmlResponse getResponse() {
-		return response;
+	public void setSignXmlResponse(SignXmlResponse signXmlResponse) {
+		this.signXmlResponse = signXmlResponse;
 	}
 
-	public void setResponse(SignXmlResponse response) {
-		this.response = response;
+	public SignPdfResponse getSignPdfResponse() {
+		return signPdfResponse;
 	}
 
-	public void callAgent(String signingConfigName, String xmlContent) {
-		
-		log.info(xadesProperties.toString());
-		response = new SignXmlResponse();
+	public void setSignPdfResponse(SignPdfResponse signPdfResponse) {
+		this.signPdfResponse = signPdfResponse;
+	}
+
+	public void callAgentGetXml(String signingConfigName, String xmlContent) {
+		log.info("CallAgentGetXml");
+		signXmlResponse = factory.createSignXmlResponse();
 		SignXmlModel signXmlModel = factory.createSignXmlModel();
 		signXmlModel.setRespCode(1234);
 		signXmlModel.setRespName(factory.createBaseModelRespName("Reponse1234"));
@@ -59,9 +71,24 @@ public class EtaxRepository {
 		} catch (Exception e) {
 			log.error(e.getMessage());
 		}
-
-		response.setSignXmlResult(factory.createSignXmlModel(signXmlModel));
-
+		signXmlResponse.setSignXmlResult(factory.createSignXmlModel(signXmlModel));
 	}
+	
+	public void callAgentGetPdf(String signingConfigName, String pdfContent) {
+		log.info("CallAgentGetPdf");
+		signPdfResponse = factory.createSignPdfResponse();
+		SignPdfModel signPdfModel = factory.createSignPdfModel();
+		signPdfModel.setRespCode(1234);
+		signPdfModel.setRespName(factory.createBaseModelRespName("Response1234"));
+		XadesBesSign xadesBesSign = new XadesBesSign(signingConfigName , xadesProperties);
+		InputStream inputPdfContent = new ByteArrayInputStream(pdfContent.getBytes(StandardCharsets.UTF_8));
+		try {
+			signPdfModel.setSignedPdf(factory.createSignPdfModelSignedPdf(xadesBesSign.signPdf(inputPdfContent).toString()));
+		} catch (Exception e) {
+			log.error(e.getMessage());
+		}
+		signPdfResponse.setSignPdfResult(factory.createSignPdfModel(signPdfModel));
+	}
+	
 
 }
