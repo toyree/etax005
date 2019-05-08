@@ -177,7 +177,6 @@ public class XadesBesSigner {
 		String signedXml = new String();
 		String buffer    = new String();
 		String line		 = new String();
-	
 		log.info("signWithoutIDEnveloped");
 		FileOutputStream outputStream = new FileOutputStream(tempPath);
 		log.info("Temp file was created file " + tempPath);
@@ -213,7 +212,6 @@ public class XadesBesSigner {
 			BufferedReader reader = new BufferedReader(new InputStreamReader(signedXmlInputStream,StandardCharsets.UTF_8));
 			line = reader.readLine();
 			while(line != null) {
-//				log.info(line);
 				buffer += line;	
 				line = reader.readLine();
 			}
@@ -229,7 +227,6 @@ public class XadesBesSigner {
 	public XadesBesSigner() {
 		signer = null;
 	}
-	
 
 	public String getTempPath() {
 		return tempPath;

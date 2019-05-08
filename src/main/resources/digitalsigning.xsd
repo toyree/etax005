@@ -5,6 +5,7 @@
 	<xs:element name="SignXmlRequest">
 		<xs:complexType>
 			<xs:sequence>
+				<xs:element name="key" minOccurs="0" nillable="true" type="xs:string"/>
 				<xs:element minOccurs="0" name="SigningConfigName"
 					nillable="true" type="xs:string" />
 				<xs:element minOccurs="0" name="XmlContent"
@@ -15,6 +16,7 @@
 	<xs:element name="SignXmlResponse">
 		<xs:complexType>
 			<xs:sequence>
+				<xs:element name="key" minOccurs="0" nillable="true" type="xs:string"/>
 				<xs:element minOccurs="0" name="SignXmlResult"
 					nillable="true" type="q1:SignXmlModel" />
 			</xs:sequence>
@@ -23,6 +25,7 @@
 	<xs:element name="SignPdfRequest">
 		<xs:complexType>
 			<xs:sequence>
+				<xs:element name="key" minOccurs="0" nillable="true" type="xs:string"/>
 				<xs:element minOccurs="0" name="SigningConfigName"
 					nillable="true" type="xs:string" />
 				<xs:element minOccurs="0" name="PdfBase64"
@@ -33,12 +36,14 @@
 	<xs:element name="SignPdfResponse">
 		<xs:complexType>
 			<xs:sequence>
+				<xs:element name="key" minOccurs="0" nillable="true" type="xs:string"/>
 				<xs:element minOccurs="0" name="SignPdfResult"
 					nillable="true" type="q1:SignPdfModel" />
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
 
+<!-- 
 	<xs:complexType name="BaseModel">
 		<xs:sequence>
 			<xs:element minOccurs="0" name="RespCode" type="xs:int" />
@@ -47,28 +52,29 @@
 		</xs:sequence>
 	</xs:complexType>
 	<xs:element name="BaseModel" type="q1:BaseModel" />
-
+ -->
+ 
 	<xs:complexType name="SignXmlModel">
-		<xs:complexContent mixed="false">
-			<xs:extension base="q1:BaseModel">
+<!-- 		<xs:complexContent mixed="false"> -->
+<!-- 			<xs:extension base="q1:BaseModel"> -->
 				<xs:sequence>
 					<xs:element minOccurs="0" name="SignedXml"
 						nillable="true" type="xs:string" />
 				</xs:sequence>
-			</xs:extension>
-		</xs:complexContent>
+<!-- 			</xs:extension> -->
+<!-- 		</xs:complexContent> -->
 	</xs:complexType>
 	<xs:element name="SignXmlModel" nillable="true"
 		type="q1:SignXmlModel" />
 	<xs:complexType name="SignPdfModel">
-		<xs:complexContent mixed="false">
-			<xs:extension base="q1:BaseModel">
+<!-- 		<xs:complexContent mixed="false"> -->
+<!-- 			<xs:extension base="q1:BaseModel"> -->
 				<xs:sequence>
 					<xs:element minOccurs="0" name="SignedPdf"
 						nillable="true" type="xs:string" />
 				</xs:sequence>
-			</xs:extension>
-		</xs:complexContent>
+<!-- 			</xs:extension> -->
+<!-- 		</xs:complexContent> -->
 	</xs:complexType>
 	<xs:element name="SignPdfModel" nillable="true"
 		type="q1:SignPdfModel" />

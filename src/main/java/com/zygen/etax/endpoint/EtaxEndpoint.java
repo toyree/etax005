@@ -31,9 +31,8 @@ public class EtaxEndpoint {
 	@PayloadRoot(namespace = NAMESPACE_URI, localPart = "SignXmlRequest")
 	@ResponsePayload
 	public SignXmlResponse SignXmlRequest(@RequestPayload SignXmlRequest request) {
-		log.info("SignXmlRequest");
 		log.info("SignXmlRequeest SigningConfigName : " + request.getSigningConfigName().getValue());
-		EtaxRepository etaxRepo = new EtaxRepository();
+		EtaxRepository etaxRepo = new EtaxRepository(request.getKey().getValue());
 		etaxRepo.setXadesProperties(xadesProperties);
 		etaxRepo.callAgentGetXml(request.getSigningConfigName().getValue(), request.getXmlContent().getValue());
 		return etaxRepo.getSignXmlResponse();
@@ -42,9 +41,8 @@ public class EtaxEndpoint {
 	@PayloadRoot(namespace = NAMESPACE_URI, localPart = "SignPdfRequest")
 	@ResponsePayload
 	public SignPdfResponse SignPdfRequest(@RequestPayload SignPdfRequest request) {
-		log.info("SignPdfRequest");
 		log.info("SignPdfRequeest SigningConfigName : " + request.getSigningConfigName().getValue());
-		EtaxRepository etaxRepo = new EtaxRepository();
+		EtaxRepository etaxRepo = new EtaxRepository(request.getKey().getValue());
 		etaxRepo.setXadesProperties(xadesProperties);
 		etaxRepo.callAgentGetPdf(request.getSigningConfigName().getValue(), request.getPdfBase64().getValue());
 		return etaxRepo.getSignPdfResponse();

@@ -22,6 +22,7 @@ public class EtaxRepository {
 	private SignPdfResponse signPdfResponse;
 	private ObjectFactory factory;
 	private XadesProperties xadesProperties;
+	private String			key;
 
 //	@PostConstruct
 //	public void initData() {
@@ -30,8 +31,9 @@ public class EtaxRepository {
 //		signXmlResponse = factory.createSignXmlResponse();
 //	}
 	
-	public EtaxRepository() {
+	public EtaxRepository(String key) {
 		factory = new ObjectFactory();
+		this.key = key;
 	}
 	
 	public XadesProperties getXadesProperties() {
@@ -62,8 +64,8 @@ public class EtaxRepository {
 		log.info("CallAgentGetXml");
 		signXmlResponse = factory.createSignXmlResponse();
 		SignXmlModel signXmlModel = factory.createSignXmlModel();
-		signXmlModel.setRespCode(1234);
-		signXmlModel.setRespName(factory.createBaseModelRespName("Reponse1234"));
+//		signXmlModel.setRespCode(1234);
+//		signXmlModel.setRespName(factory.createBaseModelRespName("Reponse1234"));
 		XadesBesSign xadesBesSign = new XadesBesSign(signingConfigName , xadesProperties);
 		InputStream inputXmlContent = new ByteArrayInputStream(xmlContent.getBytes(StandardCharsets.UTF_8));
 		try {
@@ -71,6 +73,7 @@ public class EtaxRepository {
 		} catch (Exception e) {
 			log.error(e.getMessage());
 		}
+		signXmlResponse.setKey(factory.createSignXmlResponseKey(this.key));
 		signXmlResponse.setSignXmlResult(factory.createSignXmlModel(signXmlModel));
 	}
 	
@@ -78,8 +81,8 @@ public class EtaxRepository {
 		log.info("CallAgentGetPdf");
 		signPdfResponse = factory.createSignPdfResponse();
 		SignPdfModel signPdfModel = factory.createSignPdfModel();
-		signPdfModel.setRespCode(1234);
-		signPdfModel.setRespName(factory.createBaseModelRespName("Response1234"));
+//		signPdfModel.setRespCode(1234);
+//		signPdfModel.setRespName(factory.createBaseModelRespName("Response1234"));
 		XadesBesSign xadesBesSign = new XadesBesSign(signingConfigName , xadesProperties);
 		InputStream inputPdfContent = new ByteArrayInputStream(pdfContent.getBytes(StandardCharsets.UTF_8));
 		try {
@@ -87,6 +90,7 @@ public class EtaxRepository {
 		} catch (Exception e) {
 			log.error(e.getMessage());
 		}
+		signPdfResponse.setKey(factory.createSignPdfResponseKey(this.key));
 		signPdfResponse.setSignPdfResult(factory.createSignPdfModel(signPdfModel));
 	}
 	
