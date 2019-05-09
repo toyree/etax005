@@ -1,57 +1,23 @@
 package com.zygen.etax.xades;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class XadesBesSign {
 
-//	private static final Logger log = LoggerFactory.getLogger(XadesBesSign.class);
+	private static final Logger log = LoggerFactory.getLogger(XadesBesSign.class);
+	private XadesProperties properties;
 	private String sigingConfig;
-//	private static Properties prop;
-//	private static InputStream config;
-//	private static String xmlInput;
-//	private static String xmlOutput;
-	private String pkType;
-	private String pkcs11LibPath;
-	private String pkcs11ProviderName;
-	private int pkcs11SlotId;
-	private String pkcs11Password;
-	private String pkcs12Path;
-	private String pkcs12Password;
-	private String pkTempPath;
-//	private static final String CONFIG_FILE_PATH = "src/main/resources/conf/etax-xades.properties";
-
-	public XadesBesSign(String sigingConfig , XadesProperties properties) {
-		this.sigingConfig = sigingConfig;
-		this.pkType = properties.getType();
-		this.pkcs11LibPath = properties.getCs11_lib_path();
-		this.pkcs11ProviderName = properties.getCs11_provider_name();
-		this.pkcs11SlotId       = Integer.parseInt(properties.getCs11_slot_id());
-		this.pkcs11Password     = properties.getCs11_password();
-		this.pkcs12Path         = properties.getCs12_path();
-		this.pkcs12Password		= properties.getCs12_password();
-		this.pkTempPath		 	= properties.getTemp_file_path();
-//		loadConfig(CONFIG_FILE_PATH);
+	private String key;
+		
+	public XadesBesSign(XadesProperties properties) {
+		this.properties = properties;
 	}
-
-//	private static void loadConfig(String configPath) {
-//		try {
-//			prop = new Properties();
-//			config = new FileInputStream(configPath);
-//			// load the properties file
-//			prop.load(config);
-//			xmlInput = prop.getProperty("SIGN_INPUT_PATH");
-//			xmlOutput = prop.getProperty("SIGN_OUTPUT_PATH");
-//			pkType = prop.getProperty("PK_TYPE");
-//			pkcs11LibPath = prop.getProperty("PKCS11_LIB_PATH");
-//			pkcs11ProviderName = prop.getProperty("PKCS11_PROVIDER_NAME");
-//			pkcs11SlotId = Integer.parseInt(prop.getProperty("PKCS11_SLOT_ID"));
-//			pkcs11Password = prop.getProperty("PKCS11_PASSWORD");
-//			pkcs12Path = prop.getProperty("PKCS12_PATH");
-//			pkcs12Password = prop.getProperty("PKCS12_PASSWORD");
-//		} catch (IOException e) {
-//			log.info(e.getMessage());
-//		}
-//	}
 
 	public String getSigingConfig() {
 		return sigingConfig;
@@ -61,80 +27,25 @@ public class XadesBesSign {
 		this.sigingConfig = sigingConfig;
 	}
 
-	public String getPkType() {
-		return pkType;
+	public String getKey() {
+		return key;
 	}
 
-	public void setPkType(String pkType) {
-		this.pkType = pkType;
-	}
-
-	public String getPkcs11LibPath() {
-		return pkcs11LibPath;
-	}
-
-	public void setPkcs11LibPath(String pkcs11LibPath) {
-		this.pkcs11LibPath = pkcs11LibPath;
-	}
-
-	public String getPkcs11ProviderName() {
-		return pkcs11ProviderName;
-	}
-
-	public void setPkcs11ProviderName(String pkcs11ProviderName) {
-		this.pkcs11ProviderName = pkcs11ProviderName;
-	}
-
-	public int getPkcs11SlotId() {
-		return pkcs11SlotId;
-	}
-
-	public void setPkcs11SlotId(int pkcs11SlotId) {
-		this.pkcs11SlotId = pkcs11SlotId;
-	}
-
-	public String getPkcs11Password() {
-		return pkcs11Password;
-	}
-
-	public void setPkcs11Password(String pkcs11Password) {
-		this.pkcs11Password = pkcs11Password;
-	}
-
-	public String getPkcs12Path() {
-		return pkcs12Path;
-	}
-
-	public void setPkcs12Path(String pkcs12Path) {
-		this.pkcs12Path = pkcs12Path;
-	}
-
-	public String getPkcs12Password() {
-		return pkcs12Password;
-	}
-
-	public void setPkcs12Password(String pkcs12Password) {
-		this.pkcs12Password = pkcs12Password;
-	}
-	
-	public String getPkTempPath() {
-		return pkTempPath;
-	}
-
-	public void setPkTempPath(String pkTempPath) {
-		this.pkTempPath = pkTempPath;
+	public void setKey(String key) {
+		this.key = key;
 	}
 
 	public String signXML(InputStream inputXml) throws Exception {
-		XadesBesSigner signer = new XadesBesSigner(pkTempPath);
+		log.info("Request Key : " + key + " signXML");
+		XadesBesSigner signer = new XadesBesSigner(properties.getTemp_file_path() + key + "_callxml.xml");
+		signer.setKey(key);
+		signer.setProperties(properties);
 		String outputXml      = new String();
-		if (pkType.equals("PKCS11")) {
-			// P11 signer
-			signer.setSignerPkcs11(pkcs11LibPath, pkcs11ProviderName, pkcs11SlotId, pkcs11Password);
-		} else if (pkType.equals("PKCS12")) {
-			// P12 signer
-			signer.setSignerPkcs12(pkcs12Path, pkcs12Password, pkType);
-		} else {
+		if(properties.getType().equals("PKCS11")) {
+			signer.setSignerPkcs11(properties.getCs11_lib_path(), properties.getCs11_provider_name(), Integer.parseInt(properties.getCs11_slot_id()), properties.getCs11_password());
+		}else if(properties.getType().equals("PKCS12")) {
+			signer.setSignerPkcs12(properties.getCs12_path(), properties.getCs12_password(), properties.getType());
+		}else {
 			throw new Exception(this.sigingConfig + " PK_TYPE_not_supported");
 		}
 		try {
@@ -145,10 +56,33 @@ public class XadesBesSign {
 		return outputXml;
 	}
 	
-	public String signPdf(InputStream inputPdf)throws Exception{
-		XadesBesSigner signer = new XadesBesSigner(pkTempPath);
+	public String signPdf(InputStream pdfInputStream , InputStream xmlInputStream)throws Exception{
+		log.info("Request Key : " + key + " signPdf");
+		XadesBesSigner signer = new XadesBesSigner();
+		signer.setKey(key);
+		signer.setProperties(properties);
 		String outputPdf = new String();
+		String pdfPath = properties.getTemp_file_path() + key + "_callpdf.pdf";
+		String xmlPath = properties.getTemp_file_path() + key + "_callpdf.xml";
+		createTempFile(pdfPath, pdfInputStream);
+		createTempFile(xmlPath,xmlInputStream);
+		signer.convertPDFtoA3(pdfPath, xmlPath,properties.getColorProfile());
 		return outputPdf;
+	}
+	
+	private void createTempFile(String path , InputStream inputStream) {
+		log.info("Create temp file path : " + path);
+		try {
+			byte[] buffer = new byte[inputStream.available()];
+			inputStream.read(buffer);
+			OutputStream outputStream = new FileOutputStream(path);
+			outputStream.write(buffer);
+			outputStream.close();
+			inputStream.close();
+		} catch (IOException e) {
+			log.error(e.getMessage());
+		}
+		
 	}
 	
 }

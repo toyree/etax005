@@ -8,12 +8,17 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.util.Collections;
+import java.util.GregorianCalendar;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -26,6 +31,19 @@ import javax.xml.transform.TransformerFactoryConfigurationError;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.apache.commons.io.FilenameUtils;
+import org.apache.pdfbox.cos.COSArray;
+import org.apache.pdfbox.cos.COSDictionary;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDDocumentCatalog;
+import org.apache.pdfbox.pdmodel.PDDocumentInformation;
+import org.apache.pdfbox.pdmodel.PDDocumentNameDictionary;
+import org.apache.pdfbox.pdmodel.PDEmbeddedFilesNameTreeNode;
+import org.apache.pdfbox.pdmodel.common.PDMetadata;
+import org.apache.pdfbox.pdmodel.common.filespecification.PDComplexFileSpecification;
+import org.apache.pdfbox.pdmodel.common.filespecification.PDEmbeddedFile;
+import org.apache.pdfbox.pdmodel.encryption.InvalidPasswordException;
+import org.apache.pdfbox.pdmodel.graphics.color.PDOutputIntent;
 import org.apache.xml.security.algorithms.MessageDigestAlgorithm;
 import org.apache.xml.security.signature.XMLSignature;
 import org.slf4j.Logger;
@@ -59,13 +77,39 @@ import xades4j.verification.UnexpectedJCAException;
 
 public class XadesBesSigner {
 
-//	private static final String outputTempFile = "temp/tempSigned.xml";
 	private static final Logger log = LoggerFactory.getLogger(XadesBesSign.class);
+	private static float pdfVer = 1.7f;
 	XadesSigner signer;
+	private String key;
 	private String tempPath;
-	
+	private XadesProperties properties;
+
 	public XadesBesSigner(String tempPath) {
 		this.tempPath = tempPath;
+	}
+
+	public String getKey() {
+		return key;
+	}
+
+	public void setKey(String key) {
+		this.key = key;
+	}
+
+	public XadesBesSigner() {
+		signer = null;
+	}
+
+	public String getTempPath() {
+		return tempPath;
+	}
+
+	public void setTempPath(String tempPath) {
+		this.tempPath = tempPath;
+	}
+
+	public void setProperties(XadesProperties properties) {
+		this.properties = properties;
 	}
 
 	public void setSignerPkcs11(String libPath, String providerName, int slotId, String password) throws Exception {// SigningException
@@ -170,16 +214,14 @@ public class XadesBesSigner {
 	 * @throws IOException
 	 * @throws FileNotFoundException
 	 */
-	public String signWithoutIDEnveloped(InputStream input)
-			throws IllegalArgumentException, SAXException, IOException, ParserConfigurationException, XAdES4jException, Exception{
+	public String signWithoutIDEnveloped(InputStream input) throws IllegalArgumentException, SAXException, IOException,
+			ParserConfigurationException, XAdES4jException, Exception {
 
 		String refUri;
 		String signedXml = new String();
-		String buffer    = new String();
-		String line		 = new String();
-		log.info("signWithoutIDEnveloped");
+		String buffer = new String();
+		String line = new String();
 		FileOutputStream outputStream = new FileOutputStream(tempPath);
-		log.info("Temp file was created file " + tempPath);
 		try {
 			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 			Document sourceDoc = dbf.newDocumentBuilder().parse(input);
@@ -196,7 +238,8 @@ public class XadesBesSigner {
 			}
 			DataObjectDesc dataObjRef = new DataObjectReference(refUri)
 					.withTransform(new EnvelopedSignatureTransform());
-			XadesSignatureResult result =  signer.sign(new SignedDataObjects(dataObjRef), sourceDoc.getDocumentElement());
+			XadesSignatureResult result = signer.sign(new SignedDataObjects(dataObjRef),
+					sourceDoc.getDocumentElement());
 			XMLSignature signature = result.getSignature();
 			Document docs = signature.getDocument();
 			DOMSource docSource = new DOMSource(docs);
@@ -207,33 +250,21 @@ public class XadesBesSigner {
 			StreamResult streamResult = new StreamResult(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8));
 			transformer.transform(docSource, streamResult);
 			outputStream.close();
-			log.info("Get Signed XML and Convert To String");
 			InputStream signedXmlInputStream = new FileInputStream(tempPath);
-			BufferedReader reader = new BufferedReader(new InputStreamReader(signedXmlInputStream,StandardCharsets.UTF_8));
+			BufferedReader reader = new BufferedReader(
+					new InputStreamReader(signedXmlInputStream, StandardCharsets.UTF_8));
 			line = reader.readLine();
-			while(line != null) {
-				buffer += line;	
+			while (line != null) {
+				buffer += line;
 				line = reader.readLine();
 			}
 			signedXml = buffer;
 			signedXmlInputStream.close();
 			deleteTempFile(tempPath);
 		} catch (Exception e) {
-			throw e;
+			log.error(e.getMessage());
 		}
 		return signedXml;
-	}
-
-	public XadesBesSigner() {
-		signer = null;
-	}
-
-	public String getTempPath() {
-		return tempPath;
-	}
-
-	public void setTempPath(String tempPath) {
-		this.tempPath = tempPath;
 	}
 
 	private void deleteTempFile(String tempPath) {
@@ -245,6 +276,129 @@ public class XadesBesSigner {
 		} else {
 			log.info(tempPath + " File doesn't exist");
 		}
+	}
+
+	public String convertPDFtoA3(String pdfPath, String xmlPath, String colorProfile) {
+		log.info("Convert PDF to A3");
+		String signedPdf = new String();
+		File pdfFile = new File(pdfPath);
+		PDDocument doc = loadPDF(pdfFile);
+		try {
+			File colorFile = new File(colorProfile);
+			InputStream colorIS = new FileInputStream(colorFile);
+			PDDocumentCatalog cat = makeA3compliant(doc, key + "_callpdf.xml");
+			log.info("Get Doc Cat Success");
+			attachFile(doc, xmlPath);
+			addOutputIntent(doc, cat, colorIS);
+			OutputStream pdfOutput = new FileOutputStream(properties.getTemp_file_path()+key+"signed_callpdf.pdf");
+			doc.setVersion(pdfVer);
+			doc.save(pdfOutput);
+			doc.close();
+			pdfOutput.close();
+		} catch (Exception e) {
+			log.error(e.getMessage());
+		}
+		return signedPdf;
+	}
+
+	private PDDocument loadPDF(File file) {
+		log.info("Loading PDF from path : " + file.getPath());
+		PDDocument doc = null;
+		try {
+			doc = PDDocument.load(file);
+			log.info("Loading file success");
+		} catch (InvalidPasswordException e) {
+			log.error(e.getMessage());
+		} catch (IOException e) {
+			log.error(e.getMessage());
+		}
+		return doc;
+	}
+
+	private PDDocumentCatalog makeA3compliant(PDDocument doc, String xmlFileName) throws Exception {
+		log.info("makeA3compliant");
+		PDDocumentCatalog cat = doc.getDocumentCatalog();
+		PDDocumentInformation pdd = doc.getDocumentInformation();
+		PDMetadata metadata = new PDMetadata(doc);
+		cat.setMetadata(metadata);
+		PDDocumentInformation pdi = new PDDocumentInformation();
+		pdi.setProducer(pdd.getProducer());
+		pdi.setAuthor(pdd.getAuthor());
+		pdi.setTitle(pdd.getTitle());
+		pdi.setSubject(pdd.getSubject());
+		pdi.setKeywords(pdd.getKeywords());
+		// Set OID
+		// pdi.setCustomMetadataValue("OID", "10.2.3.65.5");
+		doc.setDocumentInformation(pdi);
+		// use for eTax invoice only
+		Charset charset = StandardCharsets.UTF_8;
+		byte[] fileBytes = Files.readAllBytes(new File(properties.getXmpTemplatePath()).toPath());
+		String content = new String(fileBytes, charset);
+		content = content.replaceAll("@DocumentFileName", xmlFileName);
+		content = content.replaceAll("@DocumentType", properties.getDocType());
+		content = content.replaceAll("@DocumentVersion", properties.getDocVersion());
+		log.info(content);
+		byte[] editedBytes = content.getBytes(charset);
+		metadata.importXMPMetadata(editedBytes);
+		return cat;
+	}
+
+	private void attachFile(PDDocument doc, String xmlFilePath) throws IOException {
+		log.info("AttachFile");
+		PDEmbeddedFilesNameTreeNode efTree = new PDEmbeddedFilesNameTreeNode();
+		File embedFile = new File(xmlFilePath);
+		String subType = FilenameUtils.getExtension(xmlFilePath);
+		String embedFileName = FilenameUtils.getName(xmlFilePath);
+		// first create the file specification, which holds the embedded file
+
+		PDComplexFileSpecification fs = new PDComplexFileSpecification();
+		fs.setFile(embedFileName);
+		COSDictionary dict = fs.getCOSObject();
+		// Relation "Source" for linking with eg. catalog
+		dict.setName("AFRelationship", "Source");
+
+		dict.setString("UF", embedFileName);
+
+		InputStream is = new FileInputStream(embedFile);
+
+		PDEmbeddedFile ef = new PDEmbeddedFile(doc, is);
+
+		// set some of the attributes of the embedded file
+		ef.setModDate(GregorianCalendar.getInstance());
+
+		ef.setSize((int) embedFile.length());
+		ef.setCreationDate(new GregorianCalendar());
+		fs.setEmbeddedFile(ef);
+		ef.setSubtype(subType);
+
+		// now add the entry to the embedded file tree and set in the document.
+		efTree.setNames(Collections.singletonMap(embedFileName, fs));
+
+		// attachments are stored as part of the "names" dictionary in the
+		PDDocumentCatalog catalog = doc.getDocumentCatalog();
+
+		PDDocumentNameDictionary names = new PDDocumentNameDictionary(doc.getDocumentCatalog());
+		names.setEmbeddedFiles(efTree);
+		catalog.setNames(names);
+
+		COSDictionary dict2 = catalog.getCOSObject();
+		COSArray array = new COSArray();
+		array.add(fs.getCOSObject());
+		dict2.setItem("AF", array);
+
+	}
+
+	private void addOutputIntent(PDDocument doc, PDDocumentCatalog cat, InputStream colorProfile) throws IOException {
+		log.info("AddOutputIntent");
+		if (cat.getOutputIntents().isEmpty()) {
+			PDOutputIntent oi = new PDOutputIntent(doc, colorProfile);
+			oi.setInfo("sRGB IEC61966-2.1");
+			oi.setOutputCondition("sRGB IEC61966-2.1");
+			oi.setOutputConditionIdentifier("sRGB IEC61966-2.1");
+			oi.setRegistryName("http://www.color.org");
+			cat.addOutputIntent(oi);
+		}
+
 	}
 
 }
