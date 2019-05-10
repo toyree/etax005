@@ -12,19 +12,10 @@ public class XadesBesSign {
 
 	private static final Logger log = LoggerFactory.getLogger(XadesBesSign.class);
 	private XadesProperties properties;
-	private String sigingConfig;
 	private String key;
 		
 	public XadesBesSign(XadesProperties properties) {
 		this.properties = properties;
-	}
-
-	public String getSigingConfig() {
-		return sigingConfig;
-	}
-
-	public void setSigingConfig(String sigingConfig) {
-		this.sigingConfig = sigingConfig;
 	}
 
 	public String getKey() {
@@ -46,7 +37,7 @@ public class XadesBesSign {
 		}else if(properties.getType().equals("PKCS12")) {
 			signer.setSignerPkcs12(properties.getCs12_path(), properties.getCs12_password(), properties.getType());
 		}else {
-			throw new Exception(this.sigingConfig + " PK_TYPE_not_supported");
+			throw new Exception("Please Check application.properties : pk.type");
 		}
 		try {
 			outputXml = signer.signWithoutIDEnveloped(inputXml);

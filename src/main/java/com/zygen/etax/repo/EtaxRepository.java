@@ -51,13 +51,12 @@ public class EtaxRepository {
 		this.signPdfResponse = signPdfResponse;
 	}
 
-	public void callAgentGetXml(String signingConfigName, String xmlContent) {
+	public void callAgentGetXml(String xmlContent) {
 		log.info("Request Key : " + key + " CallAgentGetXml");
 		signXmlResponse = factory.createSignXmlResponse();
 		SignXmlModel signXmlModel = factory.createSignXmlModel();
 		XadesBesSign xadesBesSign = new XadesBesSign(properties);
 		xadesBesSign.setKey(key);
-		xadesBesSign.setSigingConfig(signingConfigName);
 		InputStream inputXmlContent = new ByteArrayInputStream(xmlContent.getBytes(StandardCharsets.UTF_8));
 		try {
 			signXmlModel.setSignedXml(
@@ -69,13 +68,12 @@ public class EtaxRepository {
 		signXmlResponse.setSignXmlResult(factory.createSignXmlModel(signXmlModel));
 	}
 
-	public void callAgentGetPdf(String signingConfigName, String pdfContent, String xmlContent) {
+	public void callAgentGetPdf(String pdfContent, String xmlContent) {
 		log.info("Request Key : " + key + " CallAgentGetPdf");
 		signPdfResponse = factory.createSignPdfResponse();
 		SignPdfModel signPdfModel = factory.createSignPdfModel();
 		XadesBesSign xadesBesSign = new XadesBesSign(properties);
 		xadesBesSign.setKey(key);
-		xadesBesSign.setSigingConfig(signingConfigName);
 		byte[] pdfByte = Base64.getDecoder().decode(pdfContent.getBytes(StandardCharsets.UTF_8));
 		InputStream inputPdfContent = new ByteArrayInputStream(pdfByte);
 		InputStream inputXmlContent = new ByteArrayInputStream(xmlContent.getBytes(StandardCharsets.UTF_8));

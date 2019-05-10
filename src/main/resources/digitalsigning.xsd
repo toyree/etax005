@@ -6,8 +6,10 @@
 		<xs:complexType>
 			<xs:sequence>
 				<xs:element name="key" minOccurs="0" nillable="true" type="xs:string"/>
+<!-- 
 				<xs:element minOccurs="0" name="SigningConfigName"
-					nillable="true" type="xs:string" />
+					nillable="true" type="xs:string" /> 
+ -->	
 				<xs:element minOccurs="0" name="XmlContent"
 					nillable="true" type="xs:string" />
 			</xs:sequence>
@@ -26,8 +28,10 @@
 		<xs:complexType>
 			<xs:sequence>
 				<xs:element name="key" minOccurs="0" nillable="true" type="xs:string"/>
+<!-- 
 				<xs:element minOccurs="0" name="SigningConfigName"
 					nillable="true" type="xs:string" />
+-->
 				<xs:element minOccurs="0" name="PdfBase64"
 					nillable="true" type="xs:string" />
 				<xs:element minOccurs="0" name="SignedXmlContent" nillable="true" type="xs:string"/>

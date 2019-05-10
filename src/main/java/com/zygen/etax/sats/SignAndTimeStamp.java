@@ -56,8 +56,8 @@ import org.bouncycastle.util.Store;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.zygen.etax.xades.XadesBesSign;
 import com.zygen.etax.xades.XadesBesSigner;
+import com.zygen.etax.xades.XadesProperties;
 
 /**
  * The SignAndTimeStamp class is used to sign PDF(.pdf) with TSA 
@@ -66,11 +66,20 @@ import com.zygen.etax.xades.XadesBesSigner;
  *
  */
 public class SignAndTimeStamp implements SignatureInterface {
-	private static final Logger log = LoggerFactory.getLogger(XadesBesSign.class);
+	private static final Logger log = LoggerFactory.getLogger(SignAndTimeStamp.class);
 	private static PrivateKey privateKey;
 	private static Certificate certificate;
 	private static TSAClient tsaClient;
 	private static Certificate[] certificateChain;
+	private XadesProperties properties;
+
+	public XadesProperties getProperties() {
+		return properties;
+	}
+
+	public void setProperties(XadesProperties properties) {
+		this.properties = properties;
+	}
 
 	boolean signPdf(File pdfFile, File signedPdfFile) throws IOException {
 		PDDocument doc = null;
@@ -172,7 +181,7 @@ public class SignAndTimeStamp implements SignatureInterface {
 		String pdfBase64 = new String();
 		log.info("SignWithTSA");
 		char[] password = passwordP12.toCharArray();
-		KeyStore keystore = KeyStore.getInstance("PKCS12");
+		KeyStore keystore = KeyStore.getInstance(properties.getType());
 		log.info("PKCS12 Path : " + inputFileP12 + ", Password : " + password.toString());
 		keystore.load(new FileInputStream(inputFileP12), password);
 		log.info("Load KeyStore success");

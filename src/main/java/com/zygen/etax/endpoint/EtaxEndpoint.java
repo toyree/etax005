@@ -31,18 +31,18 @@ public class EtaxEndpoint {
 	@PayloadRoot(namespace = NAMESPACE_URI, localPart = "SignXmlRequest")
 	@ResponsePayload
 	public SignXmlResponse SignXmlRequest(@RequestPayload SignXmlRequest request) {
-		log.info("Request Key : " + request.getKey().getValue() + " SignXmlRequest SigningConfigName : " + request.getSigningConfigName().getValue());
+		log.info("Request Key : " + request.getKey().getValue());
 		EtaxRepository etaxRepo = new EtaxRepository(request.getKey().getValue(),properties);
-		etaxRepo.callAgentGetXml(request.getSigningConfigName().getValue(), request.getXmlContent().getValue());
+		etaxRepo.callAgentGetXml(request.getXmlContent().getValue());
 		return etaxRepo.getSignXmlResponse();
 	}
 	
 	@PayloadRoot(namespace = NAMESPACE_URI, localPart = "SignPdfRequest")
 	@ResponsePayload
 	public SignPdfResponse SignPdfRequest(@RequestPayload SignPdfRequest request) {
-		log.info("Request Key : " + request.getKey().getValue() + " SignPdfRequeest SigningConfigName : " + request.getSigningConfigName().getValue());
+		log.info("Request Key : " + request.getKey().getValue());
 		EtaxRepository etaxRepo = new EtaxRepository(request.getKey().getValue(),properties);
-		etaxRepo.callAgentGetPdf(request.getSigningConfigName().getValue(), request.getPdfBase64().getValue(),request.getSignedXmlContent().getValue());
+		etaxRepo.callAgentGetPdf(request.getPdfBase64().getValue(),request.getSignedXmlContent().getValue());
 		return etaxRepo.getSignPdfResponse();
 		
 	}

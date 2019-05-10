@@ -79,7 +79,7 @@ import xades4j.verification.UnexpectedJCAException;
 
 public class XadesBesSigner {
 
-	private static final Logger log = LoggerFactory.getLogger(XadesBesSign.class);
+	private static final Logger log = LoggerFactory.getLogger(XadesBesSigner.class);
 	private static float pdfVer = 1.7f;
 	XadesSigner signer;
 	private String key;
@@ -218,7 +218,7 @@ public class XadesBesSigner {
 	 */
 	public String signWithoutIDEnveloped(InputStream input) throws IllegalArgumentException, SAXException, IOException,
 			ParserConfigurationException, XAdES4jException, Exception {
-
+		log.info("SignWithoutIDEnveloped");
 		String refUri;
 		String signedXml = new String();
 		String buffer = new String();
@@ -301,6 +301,7 @@ public class XadesBesSigner {
 			doc.close();
 			pdfOutput.close();
 			SignAndTimeStamp sats = new SignAndTimeStamp();
+			sats.setProperties(properties);
 			signedPdf = sats.signWithTSA(properties.getCs12_password(), properties.getCs12_path() , signedCallpdf_pdf , signedA1Callpdf_pdf , null, properties.getCert_store_dir(), properties.getCert_store_dir(), properties.getType());
 		} catch (Exception e) {
 			log.error(e.getMessage());
