@@ -23,6 +23,7 @@ import org.apache.pdfbox.cos.COSDictionary;
 import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.cos.COSStream;
 
+import sun.security.pkcs11.wrapper.CK_AES_CTR_PARAMS;
 import sun.security.provider.certpath.ldap.LDAPCertStoreHelper;
 import sun.security.x509.CRLDistributionPointsExtension;
 import sun.security.x509.DistributionPoint;
