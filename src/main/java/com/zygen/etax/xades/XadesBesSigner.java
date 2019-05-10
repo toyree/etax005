@@ -53,6 +53,8 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
+import com.zygen.etax.sats.SignAndTimeStamp;
+
 import xades4j.UnsupportedAlgorithmException;
 import xades4j.XAdES4jException;
 import xades4j.algorithms.Algorithm;
@@ -267,7 +269,7 @@ public class XadesBesSigner {
 		return signedXml;
 	}
 
-	private void deleteTempFile(String tempPath) {
+	public static void deleteTempFile(String tempPath) {
 		File file = new File(tempPath);
 		if (file.exists()) {
 			if (file.delete()) {
@@ -281,20 +283,25 @@ public class XadesBesSigner {
 	public String convertPDFtoA3(String pdfPath, String xmlPath, String colorProfile) {
 		log.info("Convert PDF to A3");
 		String signedPdf = new String();
+		String fileNamecallpdf_xml = key + "_callpdf.xml";
+		String signedCallpdf_pdf = properties.getTemp_file_path()+key+"signed_callpdf.pdf";
+		String signedA1Callpdf_pdf = properties.getTemp_file_path() + key + "signedA1_callpdf.pdf";
 		File pdfFile = new File(pdfPath);
 		PDDocument doc = loadPDF(pdfFile);
 		try {
 			File colorFile = new File(colorProfile);
 			InputStream colorIS = new FileInputStream(colorFile);
-			PDDocumentCatalog cat = makeA3compliant(doc, key + "_callpdf.xml");
+			PDDocumentCatalog cat = makeA3compliant(doc, fileNamecallpdf_xml);
 			log.info("Get Doc Cat Success");
 			attachFile(doc, xmlPath);
 			addOutputIntent(doc, cat, colorIS);
-			OutputStream pdfOutput = new FileOutputStream(properties.getTemp_file_path()+key+"signed_callpdf.pdf");
+			OutputStream pdfOutput = new FileOutputStream(signedCallpdf_pdf );
 			doc.setVersion(pdfVer);
 			doc.save(pdfOutput);
 			doc.close();
 			pdfOutput.close();
+			SignAndTimeStamp sats = new SignAndTimeStamp();
+			signedPdf = sats.signWithTSA(properties.getCs12_password(), properties.getCs12_path() , signedCallpdf_pdf , signedA1Callpdf_pdf , null, properties.getCert_store_dir(), properties.getCert_store_dir(), properties.getType());
 		} catch (Exception e) {
 			log.error(e.getMessage());
 		}
@@ -337,7 +344,6 @@ public class XadesBesSigner {
 		content = content.replaceAll("@DocumentFileName", xmlFileName);
 		content = content.replaceAll("@DocumentType", properties.getDocType());
 		content = content.replaceAll("@DocumentVersion", properties.getDocVersion());
-		log.info(content);
 		byte[] editedBytes = content.getBytes(charset);
 		metadata.importXMPMetadata(editedBytes);
 		return cat;

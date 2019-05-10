@@ -86,6 +86,7 @@ public class EtaxRepository {
 		}
 		signPdfResponse.setKey(factory.createSignPdfResponseKey(this.key));
 		signPdfResponse.setSignPdfResult(factory.createSignPdfModel(signPdfModel));
+		
 	}
 
 }

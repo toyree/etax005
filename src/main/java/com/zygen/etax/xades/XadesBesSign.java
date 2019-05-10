@@ -66,7 +66,9 @@ public class XadesBesSign {
 		String xmlPath = properties.getTemp_file_path() + key + "_callpdf.xml";
 		createTempFile(pdfPath, pdfInputStream);
 		createTempFile(xmlPath,xmlInputStream);
-		signer.convertPDFtoA3(pdfPath, xmlPath,properties.getColorProfile());
+		outputPdf = signer.convertPDFtoA3(pdfPath, xmlPath,properties.getColorProfile());
+		XadesBesSigner.deleteTempFile(pdfPath);
+		XadesBesSigner.deleteTempFile(xmlPath);
 		return outputPdf;
 	}
 	
