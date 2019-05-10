@@ -11,7 +11,7 @@
 	</parent>
 	<groupId>com.zygen</groupId>
 	<artifactId>etax</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0</version>
 	<name>etax</name>
 	<description>Zygen Etax webservice</description>
 	<packaging>jar</packaging>
@@ -85,6 +85,13 @@
 			<artifactId>commons-lang3</artifactId>
 			<version>3.9</version>
 		</dependency>
+		
+		<dependency>
+		    <groupId>org.apache.commons</groupId>
+		    <artifactId>commons-text</artifactId>
+		    <version>1.6</version>
+		</dependency>
+		
 	</dependencies>
 	<build>
 		<plugins>

@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
+import org.apache.commons.text.StringEscapeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,36 +55,34 @@ public class EtaxRepository {
 	public void callAgentGetXml(String xmlContent) {
 		log.info("Request Key : " + key + " CallAgentGetXml");
 		signXmlResponse = factory.createSignXmlResponse();
-		SignXmlModel signXmlModel = factory.createSignXmlModel();
 		XadesBesSign xadesBesSign = new XadesBesSign(properties);
 		xadesBesSign.setKey(key);
+		xmlContent = StringEscapeUtils.unescapeHtml4(xmlContent);
+		log.info(xmlContent);
 		InputStream inputXmlContent = new ByteArrayInputStream(xmlContent.getBytes(StandardCharsets.UTF_8));
 		try {
-			signXmlModel.setSignedXml(
-					factory.createSignXmlModelSignedXml(xadesBesSign.signXML(inputXmlContent).toString()));
+			signXmlResponse.setSignXmlResult(factory.createSignXmlRequestXmlContent((StringEscapeUtils.escapeXml10(xadesBesSign.signXML(inputXmlContent).toString()))));
 		} catch (Exception e) {
 			log.error("Request Key : " + key + " " + e.getMessage());
 		}
 		signXmlResponse.setKey(factory.createSignXmlResponseKey(key));
-		signXmlResponse.setSignXmlResult(factory.createSignXmlModel(signXmlModel));
 	}
 
 	public void callAgentGetPdf(String pdfContent, String xmlContent) {
 		log.info("Request Key : " + key + " CallAgentGetPdf");
 		signPdfResponse = factory.createSignPdfResponse();
-		SignPdfModel signPdfModel = factory.createSignPdfModel();
 		XadesBesSign xadesBesSign = new XadesBesSign(properties);
 		xadesBesSign.setKey(key);
+		xmlContent = StringEscapeUtils.unescapeHtml4(xmlContent);
 		byte[] pdfByte = Base64.getDecoder().decode(pdfContent.getBytes(StandardCharsets.UTF_8));
 		InputStream inputPdfContent = new ByteArrayInputStream(pdfByte);
 		InputStream inputXmlContent = new ByteArrayInputStream(xmlContent.getBytes(StandardCharsets.UTF_8));
 		try {
-			signPdfModel.setSignedPdf(factory.createSignPdfModelSignedPdf(xadesBesSign.signPdf(inputPdfContent, inputXmlContent).toString()));
+			signPdfResponse.setSignPdfResult(factory.createSignPdfResponseSignPdfResult(xadesBesSign.signPdf(inputPdfContent, inputXmlContent).toString()));
 		} catch (Exception e) {
 			log.error("Request Key : " + key + " " + e.getMessage());
 		}
 		signPdfResponse.setKey(factory.createSignPdfResponseKey(this.key));
-		signPdfResponse.setSignPdfResult(factory.createSignPdfModel(signPdfModel));
 		
 	}
 
