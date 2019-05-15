@@ -56,7 +56,6 @@ public class EtaxRepository {
 		XadesBesSign xadesBesSign = new XadesBesSign(properties);
 		xadesBesSign.setKey(key);
 		xmlContent = StringEscapeUtils.unescapeHtml4(xmlContent);
-		log.info(xmlContent);
 		InputStream inputXmlContent = new ByteArrayInputStream(xmlContent.getBytes(StandardCharsets.UTF_8));
 		try {
 			signXmlResponse.setSignXmlResult(factory.createSignXmlRequestXmlContent((StringEscapeUtils.escapeXml10(xadesBesSign.signXML(inputXmlContent).toString()))));

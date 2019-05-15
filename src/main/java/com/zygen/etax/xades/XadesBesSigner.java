@@ -162,7 +162,6 @@ public class XadesBesSigner {
 		log.info("getKeyingDataProvider");
 		KeyingDataProvider keyingProvider = new PKCS11KeyStoreKeyingDataProvider(libPath, providerName, slotId,
 				new FirstCertificateSelector(), new DirectPasswordProvider(password), null, false);
-
 		return keyingProvider;
 	}
 
@@ -220,8 +219,10 @@ public class XadesBesSigner {
 			}
 			DataObjectDesc dataObjRef = new DataObjectReference(refUri)
 					.withTransform(new EnvelopedSignatureTransform());
+			log.info("Create Signe Data Object");
 			XadesSignatureResult result = signer.sign(new SignedDataObjects(dataObjRef),
 					sourceDoc.getDocumentElement());
+			log.info("Get XML Signature");
 			XMLSignature signature = result.getSignature();
 			Document docs = signature.getDocument();
 			DOMSource docSource = new DOMSource(docs);
@@ -244,6 +245,8 @@ public class XadesBesSigner {
 			signedXmlInputStream.close();
 			deleteTempFile(tempPath);
 		} catch (Exception e) {
+			outputStream.close();
+			deleteTempFile(tempPath);
 			log.error(e.getMessage());
 		}
 		return signedXml;

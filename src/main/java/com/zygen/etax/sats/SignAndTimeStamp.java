@@ -119,7 +119,7 @@ public class SignAndTimeStamp implements SignatureInterface {
 
 			return true;
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error(e.getMessage());
 			return false;
 		} finally {
 			if(doc != null){
