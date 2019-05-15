@@ -26,7 +26,6 @@
 				<xs:element name="key" minOccurs="0" nillable="true" type="xs:string"/>
 				<xs:element minOccurs="0" name="PdfBase64"
 					nillable="true" type="xs:string" />
-				<xs:element minOccurs="0" name="SignedXmlContent" nillable="true" type="xs:string"/>
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
@@ -39,20 +38,4 @@
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element> 
-<!-- 	<xs:complexType name="SignXmlModel"> -->
-<!-- 				<xs:sequence> -->
-<!-- 					<xs:element minOccurs="0" name="SignedXml" -->
-<!-- 						nillable="true" type="xs:string" /> -->
-<!-- 				</xs:sequence> -->
-<!-- 	</xs:complexType> -->
-<!-- 	<xs:element name="SignXmlModel" nillable="true" -->
-<!-- 		type="q1:SignXmlModel" /> -->
-<!-- 	<xs:complexType name="SignPdfModel"> -->
-<!-- 				<xs:sequence> -->
-<!-- 					<xs:element minOccurs="0" name="SignedPdf" -->
-<!-- 						nillable="true" type="xs:string" /> -->
-<!-- 				</xs:sequence> -->
-<!-- 	</xs:complexType> -->
-<!-- 	<xs:element name="SignPdfModel" nillable="true" -->
-<!-- 		type="q1:SignPdfModel" /> -->
 </xs:schema>

@@ -56,7 +56,6 @@ import org.bouncycastle.util.Store;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.zygen.etax.xades.XadesBesSigner;
 import com.zygen.etax.xades.XadesProperties;
 
 /**
@@ -211,8 +210,6 @@ public class SignAndTimeStamp implements SignatureInterface {
 		signedA3.read(signedA3Byte, 0 , signedA3Byte.length);
 		pdfBase64 = Base64.encodeBase64String(signedA3Byte);
 		signedA3.close();
-		XadesBesSigner.deleteTempFile(inputFilePath);
-		XadesBesSigner.deleteTempFile(outputFilePath);
 		return pdfBase64;
 		
 	}

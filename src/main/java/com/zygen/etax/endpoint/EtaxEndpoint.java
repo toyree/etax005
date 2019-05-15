@@ -1,7 +1,5 @@
 package com.zygen.etax.endpoint;
 
-import org.apache.commons.text.StringEscapeUtils;
-import org.apache.tomcat.util.security.Escape;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -44,7 +42,7 @@ public class EtaxEndpoint {
 	public SignPdfResponse SignPdfRequest(@RequestPayload SignPdfRequest request) {
 		log.info("Request Key : " + request.getKey().getValue());
 		EtaxRepository etaxRepo = new EtaxRepository(request.getKey().getValue(),properties);
-		etaxRepo.callAgentGetPdf(request.getPdfBase64().getValue(),request.getSignedXmlContent().getValue());
+		etaxRepo.callAgentGetPdf(request.getPdfBase64().getValue());
 		return etaxRepo.getSignPdfResponse();
 		
 	}

@@ -8,17 +8,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
-import java.util.Collections;
-import java.util.GregorianCalendar;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -31,19 +26,6 @@ import javax.xml.transform.TransformerFactoryConfigurationError;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-import org.apache.commons.io.FilenameUtils;
-import org.apache.pdfbox.cos.COSArray;
-import org.apache.pdfbox.cos.COSDictionary;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDDocumentCatalog;
-import org.apache.pdfbox.pdmodel.PDDocumentInformation;
-import org.apache.pdfbox.pdmodel.PDDocumentNameDictionary;
-import org.apache.pdfbox.pdmodel.PDEmbeddedFilesNameTreeNode;
-import org.apache.pdfbox.pdmodel.common.PDMetadata;
-import org.apache.pdfbox.pdmodel.common.filespecification.PDComplexFileSpecification;
-import org.apache.pdfbox.pdmodel.common.filespecification.PDEmbeddedFile;
-import org.apache.pdfbox.pdmodel.encryption.InvalidPasswordException;
-import org.apache.pdfbox.pdmodel.graphics.color.PDOutputIntent;
 import org.apache.xml.security.algorithms.MessageDigestAlgorithm;
 import org.apache.xml.security.signature.XMLSignature;
 import org.slf4j.Logger;
@@ -52,8 +34,6 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
-
-import com.zygen.etax.sats.SignAndTimeStamp;
 
 import xades4j.UnsupportedAlgorithmException;
 import xades4j.XAdES4jException;
@@ -279,7 +259,7 @@ public class XadesBesSigner {
 			log.info(tempPath + " File doesn't exist");
 		}
 	}
-
+/*
 	public String convertPDFtoA3(String pdfPath, String xmlPath, String colorProfile) {
 		log.info("Convert PDF to A3");
 		String signedPdf = new String();
@@ -300,9 +280,7 @@ public class XadesBesSigner {
 			doc.save(pdfOutput);
 			doc.close();
 			pdfOutput.close();
-			SignAndTimeStamp sats = new SignAndTimeStamp();
-			sats.setProperties(properties);
-			signedPdf = sats.signWithTSA(properties.getCs12_password(), properties.getCs12_path() , signedCallpdf_pdf , signedA1Callpdf_pdf , null, properties.getCert_store_dir(), properties.getCert_store_dir(), properties.getType());
+		
 		} catch (Exception e) {
 			log.error(e.getMessage());
 		}
@@ -407,5 +385,5 @@ public class XadesBesSigner {
 		}
 
 	}
-
+*/
 }

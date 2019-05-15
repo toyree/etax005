@@ -8,6 +8,8 @@ import java.io.OutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.zygen.etax.sats.SignAndTimeStamp;
+
 public class XadesBesSign {
 
 	private static final Logger log = LoggerFactory.getLogger(XadesBesSign.class);
@@ -53,7 +55,7 @@ public class XadesBesSign {
 		return outputXml;
 	}
 
-	public String signPdf(InputStream pdfInputStream, InputStream xmlInputStream) throws Exception {
+	public String signPdf(InputStream pdfInputStream) throws Exception {
 		log.info("Request Key : " + key + " signPdf");
 		XadesBesSigner signer = new XadesBesSigner();
 		checkPK(signer);
@@ -61,12 +63,14 @@ public class XadesBesSign {
 		signer.setProperties(properties);
 		String outputPdf = new String();
 		String pdfPath = properties.getTemp_file_path() + key + "_callpdf.pdf";
-		String xmlPath = properties.getTemp_file_path() + key + "_callpdf.xml";
+		String signedPdfPath = properties.getTemp_file_path() + key + "_signedcallpdf.pdf";
 		createTempFile(pdfPath, pdfInputStream);
-		createTempFile(xmlPath, xmlInputStream);
-		outputPdf = signer.convertPDFtoA3(pdfPath, xmlPath, properties.getColorProfile());
+//		outputPdf = signer.convertPDFtoA3(pdfPath, properties.getColorProfile());
+		SignAndTimeStamp sats = new SignAndTimeStamp();
+		sats.setProperties(properties);
+		outputPdf = sats.signWithTSA(properties.getCs12_password(), properties.getCs12_path() , pdfPath, signedPdfPath, null, properties.getCert_store_dir(), properties.getCert_store_dir(), properties.getType());
 		XadesBesSigner.deleteTempFile(pdfPath);
-		XadesBesSigner.deleteTempFile(xmlPath);
+		XadesBesSigner.deleteTempFile(signedPdfPath);
 		return outputPdf;
 	}
 

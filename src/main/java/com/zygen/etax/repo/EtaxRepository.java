@@ -10,9 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.zygen.etax.model.ObjectFactory;
-import com.zygen.etax.model.SignPdfModel;
 import com.zygen.etax.model.SignPdfResponse;
-import com.zygen.etax.model.SignXmlModel;
 import com.zygen.etax.model.SignXmlResponse;
 import com.zygen.etax.xades.XadesBesSign;
 import com.zygen.etax.xades.XadesProperties;
@@ -68,17 +66,16 @@ public class EtaxRepository {
 		signXmlResponse.setKey(factory.createSignXmlResponseKey(key));
 	}
 
-	public void callAgentGetPdf(String pdfContent, String xmlContent) {
+	public void callAgentGetPdf(String pdfContent) {
 		log.info("Request Key : " + key + " CallAgentGetPdf");
 		signPdfResponse = factory.createSignPdfResponse();
 		XadesBesSign xadesBesSign = new XadesBesSign(properties);
 		xadesBesSign.setKey(key);
-		xmlContent = StringEscapeUtils.unescapeHtml4(xmlContent);
 		byte[] pdfByte = Base64.getDecoder().decode(pdfContent.getBytes(StandardCharsets.UTF_8));
 		InputStream inputPdfContent = new ByteArrayInputStream(pdfByte);
-		InputStream inputXmlContent = new ByteArrayInputStream(xmlContent.getBytes(StandardCharsets.UTF_8));
+
 		try {
-			signPdfResponse.setSignPdfResult(factory.createSignPdfResponseSignPdfResult(xadesBesSign.signPdf(inputPdfContent, inputXmlContent).toString()));
+			signPdfResponse.setSignPdfResult(factory.createSignPdfResponseSignPdfResult(xadesBesSign.signPdf(inputPdfContent).toString()));
 		} catch (Exception e) {
 			log.error("Request Key : " + key + " " + e.getMessage());
 		}
