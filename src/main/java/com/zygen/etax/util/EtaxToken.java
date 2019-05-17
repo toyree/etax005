@@ -2,7 +2,6 @@ package com.zygen.etax.util;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.Provider;
@@ -35,6 +34,7 @@ public class EtaxToken {
 	private Certificate certificate;
 	private Certificate[] certificateChain;
 	private KeyStore keyStore;
+	private String providerName;
 	private XadesSigner xadesSigner;
 
 	@Autowired
@@ -105,6 +105,14 @@ public class EtaxToken {
 		this.xadesSigner = xadesSigner;
 	}
 
+	public String getProviderName() {
+		return providerName;
+	}
+
+	public void setProviderName(String providerName) {
+		this.providerName = providerName;
+	}
+
 	public void getConnection(String providername, String slot, String lib, String type, String password)
 			throws Exception {
 		if (type.contains("PKCS11")) {
@@ -118,6 +126,7 @@ public class EtaxToken {
 			InputStream isCfg = new ByteArrayInputStream(cfg.toString().getBytes());
 			Provider p = new sun.security.pkcs11.SunPKCS11(isCfg);
 			Security.addProvider(p);
+			providername = p.getName();
 			keyStore = KeyStore.getInstance(type, p);
 			keyStore.load(null, password.toCharArray());
 			String alias = keyStore.aliases().nextElement();

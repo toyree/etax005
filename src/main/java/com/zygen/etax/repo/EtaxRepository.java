@@ -96,6 +96,7 @@ public class EtaxRepository {
 			etaxSigner.setCertificate(etaxToken.getCertificate());
 			etaxSigner.setCertificateChain(etaxToken.getCertificateChain());
 			etaxSigner.setKeyStore(etaxToken.getKeyStore());
+			etaxSigner.setProvidername(etaxToken.getProviderName());
 			signPdfResponse.setSignPdfResult(
 					factory.createSignPdfResponseSignPdfResult(etaxSigner.signPDF(pdfPath, signedPdfPath).toString()));
 		} catch (Exception e) {

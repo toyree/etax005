@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.cert.CRL;
@@ -49,6 +50,24 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
+import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.Rectangle;
+import com.itextpdf.text.pdf.PdfReader;
+import com.itextpdf.text.pdf.PdfSignatureAppearance;
+import com.itextpdf.text.pdf.PdfStamper;
+import com.itextpdf.text.pdf.security.BouncyCastleDigest;
+import com.itextpdf.text.pdf.security.CertificateUtil;
+import com.itextpdf.text.pdf.security.CrlClient;
+import com.itextpdf.text.pdf.security.CrlClientOnline;
+import com.itextpdf.text.pdf.security.DigestAlgorithms;
+import com.itextpdf.text.pdf.security.ExternalDigest;
+import com.itextpdf.text.pdf.security.ExternalSignature;
+import com.itextpdf.text.pdf.security.MakeSignature;
+import com.itextpdf.text.pdf.security.MakeSignature.CryptoStandard;
+import com.itextpdf.text.pdf.security.OcspClient;
+import com.itextpdf.text.pdf.security.OcspClientBouncyCastle;
+import com.itextpdf.text.pdf.security.PrivateKeySignature;
+import com.itextpdf.text.pdf.security.TSAClientBouncyCastle;
 //import com.zygen.etax.sats.DssHelper;
 //import com.zygen.etax.sats.TSAClient;
 import com.zygen.etax.util.EtaxFileService;
@@ -69,6 +88,7 @@ public class EtaxSigner{
 	private TSAClient tsaClient;
 	private Certificate[] certificateChain;
 	private KeyStore keyStore;
+	private String providername;
 
 	public void setPrivateKey(PrivateKey privateKey) {
 		this.privateKey = privateKey;
@@ -92,6 +112,10 @@ public class EtaxSigner{
 
 	public void setXadesSigner(XadesSigner xadesSigner) {
 		this.xadesSigner = xadesSigner;
+	}
+	
+	public void setProvidername(String providername) {
+		this.providername = providername;
 	}
 
 	public String signXML(InputStream inputXml, String tempPath) {
@@ -172,59 +196,35 @@ public class EtaxSigner{
 		return signedPDF;
 	}
 
-	private boolean signPdf(File pdfFile, File signedPdfFile) throws IOException {
+	private boolean signPdf(File pdfFile, File signedPdfFile) throws IOException, DocumentException, GeneralSecurityException {
 		log.info("signPdf PDDcoument");
-
-		PDDocument doc = null;
-		OutputStream fos = null;
-		EtaxSignature etaxSignature = new EtaxSignature(certificate,certificateChain,privateKey);
-		try {
-			doc = PDDocument.load(pdfFile);
-			fos = new FileOutputStream(signedPdfFile);
-			PDSignature signature = new PDSignature();
-			signature.setFilter(PDSignature.FILTER_ADOBE_PPKLITE);
-			signature.setSubFilter(PDSignature.SUBFILTER_ADBE_PKCS7_DETACHED);
-			signature.setSignDate(Calendar.getInstance());
-			log.info("CatalogDict");
-			COSDictionary catalogDict = doc.getDocumentCatalog().getCOSObject();
-			log.info("Set Update");
-			catalogDict.setNeedToBeUpdated(true);
-			log.info("Read Cert. Chain");
-			// =========================== For LTV Enable ===========================
-			byte[][] certs = new byte[certificateChain.length][];
-			for (int i = 0; i < certificateChain.length; i++) {
-				certs[i] = certificateChain[i].getEncoded();
-			}
-			log.info("Read Cert.");
-			List<CRL> crlList = new DssHelper().readCRLsFromCert((X509Certificate) certificateChain[0]);
-			byte[][] crls = new byte[crlList.size()][];
-			for (int i = 0; i < crlList.size(); i++) {
-				crls[i] = ((X509CRL) crlList.get(i)).getEncoded();
-			}
-			log.info("CreateDSS");
-			Iterable<byte[]> certifiates = Arrays.asList(certs);
-			COSDictionary dss = new DssHelper().createDssDictionary(certifiates, Arrays.asList(crls), null);
-			catalogDict.setItem(COSName.getPDFName("DSS"), dss);
-			// =========================== For LTV Enable =========================== */
-
-			// For big certificate chain
-			SignatureOptions signatureOptions = new SignatureOptions();
-			signatureOptions.setPreferredSignatureSize(SignatureOptions.DEFAULT_SIGNATURE_SIZE * 2);
-			doc.addSignature(signature, etaxSignature, signatureOptions);
-			log.info("SaveIncremental");
-			doc.saveIncremental(fos);
-			return true;
-		} catch (Exception e) {
-			log.error(e.getMessage());
-			if (doc != null) {
-				doc.close();
-			}
-			fos.close();
-			return false;
-		} finally {
-			if (doc != null) {
-				doc.close();
-			}
-		}
+		OcspClient ocspClient = new OcspClientBouncyCastle();
+		TSAClientBouncyCastle tsaClient = null;
+        for (int i = 0; i < certificateChain.length; i++) {
+        	X509Certificate cert = (X509Certificate)certificateChain[i];
+        	String tsaUrl = CertificateUtil.getTSAURL(cert);
+        	if (tsaUrl != null) {
+        		log.info("TSA Url : " + tsaUrl);
+        		tsaClient = new TSAClientBouncyCastle(tsaUrl);
+        		break;
+        	}
+        }
+        List<CrlClient> crlList = new ArrayList<CrlClient>();
+        crlList.add(new CrlClientOnline(certificateChain));
+        char pdfVersion = '\0';
+        PdfReader pdfReader = new PdfReader(pdfFile.getPath());
+        FileOutputStream os = new FileOutputStream(signedPdfFile.getPath());
+        PdfStamper stamper = PdfStamper.createSignature(pdfReader, os, pdfVersion);
+        PdfSignatureAppearance signatureAppearance = stamper.getSignatureAppearance();
+//        signatureAppearance.setReason("");
+//        signatureAppearance.setLocation("");
+//        signatureAppearance.setVisibleSignature(new Rectangle(36,748,144,780), 1, "Sig");
+        //Creatring the signature
+        ExternalSignature externalSignature = new PrivateKeySignature( privateKey, DigestAlgorithms.SHA256 , providername);
+        ExternalDigest externalDigest = new BouncyCastleDigest();
+        MakeSignature.signDetached(signatureAppearance, externalDigest, externalSignature,certificateChain, crlList, ocspClient,tsaClient,0,CryptoStandard.CMS);
+		return true;
+		
 	}
+	
 }
