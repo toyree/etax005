@@ -18,6 +18,7 @@ import com.zygen.etax.model.SignPdfResponse;
 import com.zygen.etax.model.SignXmlResponse;
 import com.zygen.etax.util.EtaxFileService;
 import com.zygen.etax.util.EtaxProperties;
+import com.zygen.etax.util.EtaxToken;
 
 @Component
 public class EtaxRepository {
@@ -25,6 +26,8 @@ public class EtaxRepository {
 	private static final Logger log = LoggerFactory.getLogger(EtaxRepository.class);
 	@Autowired
 	private EtaxProperties etaxProperties;
+	@Autowired
+	private EtaxToken etaxToken;
 	private SignXmlResponse signXmlResponse;
 	private SignPdfResponse signPdfResponse;
 	private ObjectFactory factory;
@@ -32,6 +35,7 @@ public class EtaxRepository {
 
 	@PostConstruct
 	public void init() {
+		log.info("EtaxRepository Initiated");
 		factory = new ObjectFactory();
 	}
 
@@ -64,8 +68,7 @@ public class EtaxRepository {
 		signXmlResponse = factory.createSignXmlResponse();
 		try {
 			EtaxSigner etaxSigner = new EtaxSigner();
-			etaxSigner.setXadesSigner(etaxProperties.getCs11_lib_path(), etaxProperties.getCs11_provider_name(),
-					etaxProperties.getCs11_slot_id(), etaxProperties.getCs11_password());
+			etaxSigner.setXadesSigner(etaxToken.getXadesSigner());
 			xmlContent = StringEscapeUtils.unescapeHtml4(xmlContent);
 			InputStream inputXmlContent = new ByteArrayInputStream(xmlContent.getBytes(StandardCharsets.UTF_8));
 			signXmlResponse.setSignXmlResult(factory.createSignXmlRequestXmlContent((StringEscapeUtils.escapeXml10(
@@ -86,11 +89,13 @@ public class EtaxRepository {
 			byte[] pdfByte = Base64.getDecoder().decode(pdfContent.getBytes(StandardCharsets.UTF_8));
 			InputStream isPdfContent = new ByteArrayInputStream(pdfByte);
 			EtaxFileService.createTempFile(pdfPath, isPdfContent);
-			EtaxSigner  etaxSigner = new EtaxSigner();
-			etaxSigner.pdfGetKeyStore(etaxProperties.getCs11_provider_name(), etaxProperties.getCs11_slot_id(),
-					etaxProperties.getCs11_lib_path(), etaxProperties.getType(), etaxProperties.getCs11_password());
-			signPdfResponse.setSignPdfResult(factory.createSignPdfResponseSignPdfResult(
-					etaxSigner.signPDF(pdfPath, signedPdfPath).toString()));
+			EtaxSigner etaxSigner = new EtaxSigner();
+			etaxSigner.setPrivateKey(etaxToken.getPrivateKey());
+			etaxSigner.setCertificate(etaxToken.getCertificate());
+			etaxSigner.setCertificateChain(etaxToken.getCertificateChain());
+			etaxSigner.setKeyStore(etaxToken.getKeyStore());
+			signPdfResponse.setSignPdfResult(
+					factory.createSignPdfResponseSignPdfResult(etaxSigner.signPDF(pdfPath, signedPdfPath).toString()));
 			EtaxFileService.deleteTempFile(pdfPath);
 		} catch (Exception e) {
 			log.error(e.getMessage());

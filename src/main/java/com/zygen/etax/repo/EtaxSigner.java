@@ -85,18 +85,42 @@ public class EtaxSigner implements SignatureInterface {
 	private Certificate[] certificateChain;
 	private KeyStore keyStore;
 
-	// for XML
-	public void setXadesSigner(String lib, String provider, String slotId, String password)
-			throws NumberFormatException, KeyStoreException, XadesProfileResolutionException {
-		log.info("setXadesSigner");
-		AlgorithmsProviderEx ap = new DefaultAlgorithmsProviderEx();
-		KeyingDataProvider keyingProvider = new PKCS11KeyStoreKeyingDataProvider(lib, provider,
-				Integer.parseInt(slotId), new FirstCertificateSelector(), new DirectPasswordProvider(password), null,
-				false);
-		XadesSigningProfile p = new XadesBesSigningProfile(keyingProvider);
-		p.withAlgorithmsProviderEx(ap);
-		xadesSigner = p.newSigner();
+	public void setPrivateKey(PrivateKey privateKey) {
+		this.privateKey = privateKey;
 	}
+
+	public void setCertificate(Certificate certificate) {
+		this.certificate = certificate;
+	}
+
+	public void setTsaClient(TSAClient tsaClient) {
+		this.tsaClient = tsaClient;
+	}
+
+	public void setCertificateChain(Certificate[] certificateChain) {
+		this.certificateChain = certificateChain;
+	}
+
+	public void setKeyStore(KeyStore keyStore) {
+		this.keyStore = keyStore;
+	}
+	
+	public void setXadesSigner(XadesSigner xadesSigner) {
+		this.xadesSigner = xadesSigner;
+	}
+
+	// for XML
+//	public void setXadesSigner(String lib, String provider, String slotId, String password)
+//			throws NumberFormatException, KeyStoreException, XadesProfileResolutionException {
+//		log.info("setXadesSigner");
+//		AlgorithmsProviderEx ap = new DefaultAlgorithmsProviderEx();
+//		KeyingDataProvider keyingProvider = new PKCS11KeyStoreKeyingDataProvider(lib, provider,
+//				Integer.parseInt(slotId), new FirstCertificateSelector(), new DirectPasswordProvider(password), null,
+//				false);
+//		XadesSigningProfile p = new XadesBesSigningProfile(keyingProvider);
+//		p.withAlgorithmsProviderEx(ap);
+//		xadesSigner = p.newSigner();
+//	}
 
 	public String signXML(InputStream inputXml, String tempPath) {
 		log.info("signXML");
@@ -145,26 +169,26 @@ public class EtaxSigner implements SignatureInterface {
 		return signedXmlContent;
 	}
 
-	public void pdfGetKeyStore(String providername, String slot, String lib, String type, String password)
-			throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException,
-			UnrecoverableKeyException {
-		log.info("pdfGetProvider");
-		StringBuilder cfg = new StringBuilder();
-		cfg.append("name=" + providername);
-		cfg.append(System.getProperty("line.separator"));
-		cfg.append("slot=" + slot);
-		cfg.append(System.getProperty("line.separator"));
-		cfg.append("library=" + lib);
-		InputStream isCfg = new ByteArrayInputStream(cfg.toString().getBytes(StandardCharsets.UTF_8));
-		Provider p = new sun.security.pkcs11.SunPKCS11(isCfg);
-		Security.addProvider(p);
-		keyStore = KeyStore.getInstance(type, p);
-		keyStore.load(null, password.toCharArray());
-		String alias = keyStore.aliases().nextElement();
-		privateKey = (PrivateKey) keyStore.getKey(alias, password.toCharArray());
-		certificateChain = keyStore.getCertificateChain(alias);
-	    certificate = keyStore.getCertificate(alias);
-	}
+//	public void pdfGetKeyStore(String providername, String slot, String lib, String type, String password)
+//			throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException,
+//			UnrecoverableKeyException {
+//		log.info("pdfGetProvider");
+//		StringBuilder cfg = new StringBuilder();
+//		cfg.append("name=" + providername);
+//		cfg.append(System.getProperty("line.separator"));
+//		cfg.append("slot=" + slot);
+//		cfg.append(System.getProperty("line.separator"));
+//		cfg.append("library=" + lib);
+//		InputStream isCfg = new ByteArrayInputStream(cfg.toString().getBytes(StandardCharsets.UTF_8));
+//		Provider p = new sun.security.pkcs11.SunPKCS11(isCfg);
+//		Security.addProvider(p);
+//		keyStore = KeyStore.getInstance(type, p);
+//		keyStore.load(null, password.toCharArray());
+//		String alias = keyStore.aliases().nextElement();
+//		privateKey = (PrivateKey) keyStore.getKey(alias, password.toCharArray());
+//		certificateChain = keyStore.getCertificateChain(alias);
+//		certificate = keyStore.getCertificate(alias);
+//	}
 
 	public String signPDF(String pdfPath, String signedPdfPath) {
 		log.info("signPDF");
@@ -181,11 +205,12 @@ public class EtaxSigner implements SignatureInterface {
 					isSignedPdf.read(signedPdfByte, 0, signedPdfByte.length);
 					signedPDF = Base64.getEncoder().encodeToString(signedPdfByte);
 					isSignedPdf.close();
+					outputFile.delete();
 				} else {
-					if(inputFile.exists()) {
+					if (inputFile.exists()) {
 						inputFile.delete();
 					}
-					if(outputFile.exists()) {
+					if (outputFile.exists()) {
 						outputFile.delete();
 					}
 				}

@@ -13,7 +13,6 @@ public class EtaxApplication {
 
 	public static void main(String[] args) {
 		ApplicationContext context = SpringApplication.run(EtaxApplication.class, args);
-		context.getApplicationName();
 	}
 
 }
