@@ -2,7 +2,7 @@ package com.zygen.etax.endpoint;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.ws.server.endpoint.annotation.Endpoint;
 import org.springframework.ws.server.endpoint.annotation.PayloadRoot;
 import org.springframework.ws.server.endpoint.annotation.RequestPayload;
@@ -13,38 +13,32 @@ import com.zygen.etax.model.SignPdfResponse;
 import com.zygen.etax.model.SignXmlRequest;
 import com.zygen.etax.model.SignXmlResponse;
 import com.zygen.etax.repo.EtaxRepository;
-import com.zygen.etax.xades.XadesProperties;
-
 
 @Endpoint
-@EnableConfigurationProperties({XadesProperties.class})
 public class EtaxEndpoint {
-	
+
 	private static final Logger log = LoggerFactory.getLogger(EtaxEndpoint.class);
 	private static final String NAMESPACE_URI = "http://model.etax.zygen.com/";
-	private XadesProperties properties;
 	
-	public EtaxEndpoint(XadesProperties properties) {
-		this.properties = properties;
-	}
-	
+	@Autowired
+	private EtaxRepository etaxRepository;
+
 	@PayloadRoot(namespace = NAMESPACE_URI, localPart = "SignXmlRequest")
 	@ResponsePayload
 	public SignXmlResponse SignXmlRequest(@RequestPayload SignXmlRequest request) {
-		log.info("Request Key : " + request.getKey().getValue());
-		EtaxRepository etaxRepo = new EtaxRepository(request.getKey().getValue(),properties);
-		etaxRepo.callAgentGetXml(request.getXmlContent().getValue());
-		return etaxRepo.getSignXmlResponse();
+		log.info("SignXmlRequest : " + request.getKey().getValue());
+		etaxRepository.setKey(request.getKey().getValue());
+		etaxRepository.callAgentGetXml(request.getXmlContent().getValue());
+		return etaxRepository.getSignXmlResponse();
 	}
-	
+
 	@PayloadRoot(namespace = NAMESPACE_URI, localPart = "SignPdfRequest")
 	@ResponsePayload
 	public SignPdfResponse SignPdfRequest(@RequestPayload SignPdfRequest request) {
-		log.info("Request Key : " + request.getKey().getValue());
-		EtaxRepository etaxRepo = new EtaxRepository(request.getKey().getValue(),properties);
-		etaxRepo.callAgentGetPdf(request.getPdfBase64().getValue());
-		return etaxRepo.getSignPdfResponse();
-		
+		log.info("SignPdfRequest : " + request.getKey().getValue());
+		etaxRepository.setKey(request.getKey().getValue());
+		etaxRepository.callAgentGetPdf(request.getPdfBase64().getValue());
+		return etaxRepository.getSignPdfResponse();
 	}
-	
+
 }

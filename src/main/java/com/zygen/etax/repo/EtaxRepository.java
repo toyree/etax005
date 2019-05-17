@@ -5,33 +5,34 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
+import javax.annotation.PostConstruct;
+
 import org.apache.commons.text.StringEscapeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import com.zygen.etax.model.ObjectFactory;
 import com.zygen.etax.model.SignPdfResponse;
 import com.zygen.etax.model.SignXmlResponse;
-import com.zygen.etax.xades.XadesBesSign;
-import com.zygen.etax.xades.XadesProperties;
+import com.zygen.etax.util.EtaxFileService;
+import com.zygen.etax.util.EtaxProperties;
 
-
+@Component
 public class EtaxRepository {
 
 	private static final Logger log = LoggerFactory.getLogger(EtaxRepository.class);
+	@Autowired
+	private EtaxProperties etaxProperties;
 	private SignXmlResponse signXmlResponse;
 	private SignPdfResponse signPdfResponse;
 	private ObjectFactory factory;
-	private XadesProperties properties;
 	private String key;
-	
-	
-	
-	public EtaxRepository(String key,XadesProperties properties){
+
+	@PostConstruct
+	public void init() {
 		factory = new ObjectFactory();
-		this.key = key;
-		this.properties = properties;
-		log.info("Key = " + key + " Properties = " + properties.toString());
 	}
 
 	public SignXmlResponse getSignXmlResponse() {
@@ -50,36 +51,51 @@ public class EtaxRepository {
 		this.signPdfResponse = signPdfResponse;
 	}
 
+	public String getKey() {
+		return key;
+	}
+
+	public void setKey(String key) {
+		this.key = key;
+	}
+
 	public void callAgentGetXml(String xmlContent) {
 		log.info("Request Key : " + key + " CallAgentGetXml");
 		signXmlResponse = factory.createSignXmlResponse();
-		XadesBesSign xadesBesSign = new XadesBesSign(properties);
-		xadesBesSign.setKey(key);
-		xmlContent = StringEscapeUtils.unescapeHtml4(xmlContent);
-		InputStream inputXmlContent = new ByteArrayInputStream(xmlContent.getBytes(StandardCharsets.UTF_8));
 		try {
-			signXmlResponse.setSignXmlResult(factory.createSignXmlRequestXmlContent((StringEscapeUtils.escapeXml10(xadesBesSign.signXML(inputXmlContent).toString()))));
+			EtaxSigner etaxSigner = new EtaxSigner();
+			etaxSigner.setXadesSigner(etaxProperties.getCs11_lib_path(), etaxProperties.getCs11_provider_name(),
+					etaxProperties.getCs11_slot_id(), etaxProperties.getCs11_password());
+			xmlContent = StringEscapeUtils.unescapeHtml4(xmlContent);
+			InputStream inputXmlContent = new ByteArrayInputStream(xmlContent.getBytes(StandardCharsets.UTF_8));
+			signXmlResponse.setSignXmlResult(factory.createSignXmlRequestXmlContent((StringEscapeUtils.escapeXml10(
+					etaxSigner.signXML(inputXmlContent, etaxProperties.getTemp_file_path() + key + "_callxml.xml")
+							.toString()))));
 		} catch (Exception e) {
-			log.error("Request Key : " + key + " " + e.getMessage());
+			log.error(e.getMessage());
 		}
 		signXmlResponse.setKey(factory.createSignXmlResponseKey(key));
 	}
 
 	public void callAgentGetPdf(String pdfContent) {
-		log.info("Request Key : " + key + " CallAgentGetPdf");
+		log.info("callAgentGetPdf");
 		signPdfResponse = factory.createSignPdfResponse();
-		XadesBesSign xadesBesSign = new XadesBesSign(properties);
-		xadesBesSign.setKey(key);
-		byte[] pdfByte = Base64.getDecoder().decode(pdfContent.getBytes(StandardCharsets.UTF_8));
-		InputStream inputPdfContent = new ByteArrayInputStream(pdfByte);
-
 		try {
-			signPdfResponse.setSignPdfResult(factory.createSignPdfResponseSignPdfResult(xadesBesSign.signPdf(inputPdfContent).toString()));
+			String pdfPath = etaxProperties.getTemp_file_path() + key + "_callpdf.pdf";
+			String signedPdfPath = etaxProperties.getTemp_file_path() + key + "signed_callpdf.pdf";
+			byte[] pdfByte = Base64.getDecoder().decode(pdfContent.getBytes(StandardCharsets.UTF_8));
+			InputStream isPdfContent = new ByteArrayInputStream(pdfByte);
+			EtaxFileService.createTempFile(pdfPath, isPdfContent);
+			EtaxSigner  etaxSigner = new EtaxSigner();
+			etaxSigner.pdfGetKeyStore(etaxProperties.getCs11_provider_name(), etaxProperties.getCs11_slot_id(),
+					etaxProperties.getCs11_lib_path(), etaxProperties.getType(), etaxProperties.getCs11_password());
+			signPdfResponse.setSignPdfResult(factory.createSignPdfResponseSignPdfResult(
+					etaxSigner.signPDF(pdfPath, signedPdfPath).toString()));
+			EtaxFileService.deleteTempFile(pdfPath);
 		} catch (Exception e) {
-			log.error("Request Key : " + key + " " + e.getMessage());
+			log.error(e.getMessage());
 		}
 		signPdfResponse.setKey(factory.createSignPdfResponseKey(this.key));
-		
-	}
 
+	}
 }

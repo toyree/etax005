@@ -1,9 +1,15 @@
-package com.zygen.etax.xades;
+package com.zygen.etax.util;
 
+import javax.annotation.PostConstruct;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "pk")
-public class XadesProperties {
+public class EtaxProperties {
+	
+	private static final Logger log = LoggerFactory.getLogger(EtaxProperties.class);
 	private String type;
 	private String cs11_lib_path;
 	private String cs11_slot_id;
@@ -21,11 +27,17 @@ public class XadesProperties {
 	private String docType;
 	private String docVersion;
 	private String xmpTemplatePath;
-
+	
+	@PostConstruct
+	public void init(){
+		log.info("EtaxProperties Initiated");
+		log.info(this.toString());
+	}
+	
 	public String getType() {
 		return type;
 	}
-
+	
 	public void setType(String type) {
 		this.type = type;
 	}
@@ -160,7 +172,7 @@ public class XadesProperties {
 
 	@Override
 	public String toString() {
-		return "XadesProperties [type=" + type + ", cs11_lib_path=" + cs11_lib_path + ", cs11_slot_id=" + cs11_slot_id
+		return "EtaxProperties [type=" + type + ", cs11_lib_path=" + cs11_lib_path + ", cs11_slot_id=" + cs11_slot_id
 				+ ", cs11_provider_name=" + cs11_provider_name + ", cs11_password=" + cs11_password + ", cs12_path="
 				+ cs12_path + ", cs12_password=" + cs12_password + ", verify_input_path=" + verify_input_path
 				+ ", trust_store_type=" + trust_store_type + ", trust_store_path=" + trust_store_path
