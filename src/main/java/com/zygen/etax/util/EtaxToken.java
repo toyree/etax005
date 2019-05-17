@@ -39,7 +39,7 @@ public class EtaxToken {
 
 	@Autowired
 	private EtaxProperties etaxProperties;
-
+	
 	@Autowired
 	private ConfigurableApplicationContext ctx;
 
@@ -107,8 +107,6 @@ public class EtaxToken {
 
 	public void getConnection(String providername, String slot, String lib, String type, String password)
 			throws Exception {
-		log.info("pdfGetProvider");
-
 		if (type.contains("PKCS11")) {
 			// PDF
 			StringBuilder cfg = new StringBuilder();
@@ -117,7 +115,7 @@ public class EtaxToken {
 			cfg.append("slot=" + slot);
 			cfg.append(System.getProperty("line.separator"));
 			cfg.append("library=" + lib);
-			InputStream isCfg = new ByteArrayInputStream(cfg.toString().getBytes(StandardCharsets.UTF_8));
+			InputStream isCfg = new ByteArrayInputStream(cfg.toString().getBytes());
 			Provider p = new sun.security.pkcs11.SunPKCS11(isCfg);
 			Security.addProvider(p);
 			keyStore = KeyStore.getInstance(type, p);

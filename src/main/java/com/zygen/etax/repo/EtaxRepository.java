@@ -1,6 +1,7 @@
 package com.zygen.etax.repo;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -72,7 +73,7 @@ public class EtaxRepository {
 			xmlContent = StringEscapeUtils.unescapeHtml4(xmlContent);
 			InputStream inputXmlContent = new ByteArrayInputStream(xmlContent.getBytes(StandardCharsets.UTF_8));
 			signXmlResponse.setSignXmlResult(factory.createSignXmlRequestXmlContent((StringEscapeUtils.escapeXml10(
-					etaxSigner.signXML(inputXmlContent, etaxProperties.getTemp_file_path() + key + "_callxml.xml")
+					etaxSigner.signXML(inputXmlContent, etaxProperties.getTemp_file_path() + key + "_signed.xml")
 							.toString()))));
 		} catch (Exception e) {
 			log.error(e.getMessage());
@@ -83,10 +84,11 @@ public class EtaxRepository {
 	public void callAgentGetPdf(String pdfContent) {
 		log.info("callAgentGetPdf");
 		signPdfResponse = factory.createSignPdfResponse();
+		String pdfPath = etaxProperties.getTemp_file_path() + key + "_pd.pdf";
+		String signedPdfPath = etaxProperties.getTemp_file_path() + key + "_signedpd.pdf";
 		try {
-			String pdfPath = etaxProperties.getTemp_file_path() + key + "_callpdf.pdf";
-			String signedPdfPath = etaxProperties.getTemp_file_path() + key + "signed_callpdf.pdf";
-			byte[] pdfByte = Base64.getDecoder().decode(pdfContent.getBytes(StandardCharsets.UTF_8));
+			
+			byte[] pdfByte = Base64.getDecoder().decode(pdfContent);
 			InputStream isPdfContent = new ByteArrayInputStream(pdfByte);
 			EtaxFileService.createTempFile(pdfPath, isPdfContent);
 			EtaxSigner etaxSigner = new EtaxSigner();
@@ -96,8 +98,12 @@ public class EtaxRepository {
 			etaxSigner.setKeyStore(etaxToken.getKeyStore());
 			signPdfResponse.setSignPdfResult(
 					factory.createSignPdfResponseSignPdfResult(etaxSigner.signPDF(pdfPath, signedPdfPath).toString()));
-			EtaxFileService.deleteTempFile(pdfPath);
 		} catch (Exception e) {
+			log.error(e.getMessage());
+		}
+		try {
+			EtaxFileService.deleteTempFile(pdfPath);
+		} catch (IOException e) {
 			log.error(e.getMessage());
 		}
 		signPdfResponse.setKey(factory.createSignPdfResponseKey(this.key));
