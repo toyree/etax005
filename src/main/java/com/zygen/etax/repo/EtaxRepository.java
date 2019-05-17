@@ -87,8 +87,7 @@ public class EtaxRepository {
 		String pdfPath = etaxProperties.getTemp_file_path() + key + "_pd.pdf";
 		String signedPdfPath = etaxProperties.getTemp_file_path() + key + "_signedpd.pdf";
 		try {
-			
-			byte[] pdfByte = Base64.getDecoder().decode(pdfContent);
+			byte[] pdfByte = Base64.getDecoder().decode(pdfContent.getBytes());
 			InputStream isPdfContent = new ByteArrayInputStream(pdfByte);
 			EtaxFileService.createTempFile(pdfPath, isPdfContent);
 			EtaxSigner etaxSigner = new EtaxSigner();
