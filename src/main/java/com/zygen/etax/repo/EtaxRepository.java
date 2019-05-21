@@ -69,7 +69,7 @@ public class EtaxRepository {
 		signXmlResponse = factory.createSignXmlResponse();
 		try {
 			EtaxSigner etaxSigner = new EtaxSigner();
-			etaxSigner.setXadesSigner(etaxToken.getXadesSigner());
+			setInitialEtaxSigner(etaxSigner);
 			xmlContent = StringEscapeUtils.unescapeHtml4(xmlContent);
 			InputStream inputXmlContent = new ByteArrayInputStream(xmlContent.getBytes(StandardCharsets.UTF_8));
 			signXmlResponse.setSignXmlResult(factory.createSignXmlRequestXmlContent((StringEscapeUtils.escapeXml10(
@@ -91,11 +91,7 @@ public class EtaxRepository {
 			InputStream isPdfContent = new ByteArrayInputStream(pdfByte);
 			EtaxFileService.createTempFile(pdfPath, isPdfContent);
 			EtaxSigner etaxSigner = new EtaxSigner();
-			etaxSigner.setPrivateKey(etaxToken.getPrivateKey());
-			etaxSigner.setCertificate(etaxToken.getCertificate());
-			etaxSigner.setCertificateChain(etaxToken.getCertificateChain());
-			etaxSigner.setKeyStore(etaxToken.getKeyStore());
-			etaxSigner.setProvidername(etaxToken.getProviderName());
+			setInitialEtaxSigner(etaxSigner);
 			signPdfResponse.setSignPdfResult(
 					factory.createSignPdfResponseSignPdfResult(etaxSigner.signPDF(pdfPath, signedPdfPath).toString()));
 		} catch (Exception e) {
@@ -108,5 +104,16 @@ public class EtaxRepository {
 		}
 		signPdfResponse.setKey(factory.createSignPdfResponseKey(this.key));
 
+	}
+
+	private void setInitialEtaxSigner(EtaxSigner etaxSigner) {
+//		etaxSigner.setXadesSigner(etaxToken.getXadesSigner());
+		etaxSigner.setPrivateKey(etaxToken.getPrivateKey());
+		etaxSigner.setCertificate(etaxToken.getCertificate());
+		etaxSigner.setCertificateChain(etaxToken.getCertificateChain());
+		etaxSigner.setKeyStore(etaxToken.getKeyStore());
+		etaxSigner.setProvidername(etaxToken.getProviderName());
+		etaxSigner.setX509Certificate(etaxToken.getX509Certificate());
+		etaxSigner.setKeyStorePrivateKeyEntry(etaxToken.getKeyStorePrivateKeyEntry());
 	}
 }
