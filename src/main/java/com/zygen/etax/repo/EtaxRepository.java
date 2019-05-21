@@ -7,6 +7,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 import javax.annotation.PostConstruct;
+import javax.security.auth.Subject;
+import javax.security.auth.callback.Callback;
+import javax.security.auth.callback.CallbackHandler;
+import javax.security.auth.callback.PasswordCallback;
+import javax.security.auth.callback.UnsupportedCallbackException;
+import javax.security.auth.login.LoginException;
 
 import org.apache.commons.text.StringEscapeUtils;
 import org.slf4j.Logger;
@@ -72,9 +78,11 @@ public class EtaxRepository {
 			setInitialEtaxSigner(etaxSigner);
 			xmlContent = StringEscapeUtils.unescapeHtml4(xmlContent);
 			InputStream inputXmlContent = new ByteArrayInputStream(xmlContent.getBytes(StandardCharsets.UTF_8));
+//			login();
 			signXmlResponse.setSignXmlResult(factory.createSignXmlRequestXmlContent((StringEscapeUtils.escapeXml10(
 					etaxSigner.signXML(inputXmlContent, etaxProperties.getTemp_file_path() + key + "_signed.xml")
 							.toString()))));
+//			logout();
 		} catch (Exception e) {
 			log.error(e.getMessage());
 		}
@@ -92,8 +100,10 @@ public class EtaxRepository {
 			EtaxFileService.createTempFile(pdfPath, isPdfContent);
 			EtaxSigner etaxSigner = new EtaxSigner();
 			setInitialEtaxSigner(etaxSigner);
+//			login();
 			signPdfResponse.setSignPdfResult(
 					factory.createSignPdfResponseSignPdfResult(etaxSigner.signPDF(pdfPath, signedPdfPath).toString()));
+//			logout();
 		} catch (Exception e) {
 			log.error(e.getMessage());
 		}
@@ -107,7 +117,6 @@ public class EtaxRepository {
 	}
 
 	private void setInitialEtaxSigner(EtaxSigner etaxSigner) {
-//		etaxSigner.setXadesSigner(etaxToken.getXadesSigner());
 		etaxSigner.setPrivateKey(etaxToken.getPrivateKey());
 		etaxSigner.setCertificate(etaxToken.getCertificate());
 		etaxSigner.setCertificateChain(etaxToken.getCertificateChain());
@@ -116,4 +125,27 @@ public class EtaxRepository {
 		etaxSigner.setX509Certificate(etaxToken.getX509Certificate());
 		etaxSigner.setKeyStorePrivateKeyEntry(etaxToken.getKeyStorePrivateKeyEntry());
 	}
+	
+	private void login() throws LoginException {
+//		etaxToken.getAuthProvider().login(new Subject(), new PasswordCallBackHandler());
+//		log.info(etaxToken.getAuthProvider().getName() + " Login success!!");
+	}
+	
+	private void logout() throws LoginException {
+//		etaxToken.getAuthProvider().logout();
+//		log.info(etaxToken.getAuthProvider().getName() + " Logout success!!");
+	}
+	
+//	public class PasswordCallBackHandler implements CallbackHandler {
+//
+//		@Override
+//		public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
+//			if (!(callbacks[0] instanceof PasswordCallback)) {
+//				throw new UnsupportedCallbackException(callbacks[0]);
+//			}
+//			PasswordCallback pc = (PasswordCallback) callbacks[0];
+//			pc.setPassword(etaxProperties.getCs11_password().toCharArray());
+//		}
+//
+//	}
 }

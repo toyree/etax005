@@ -11,14 +11,11 @@ import java.security.Security;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 
-import javax.security.auth.Subject;
+import javax.annotation.PostConstruct;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
-import javax.security.auth.login.LoginException;
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,17 +23,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.stereotype.Component;
 
-import xades4j.production.XadesBesSigningProfile;
-import xades4j.production.XadesSigner;
-import xades4j.production.XadesSigningProfile;
-import xades4j.providers.AlgorithmsProviderEx;
-import xades4j.providers.KeyingDataProvider;
-import xades4j.providers.impl.DefaultAlgorithmsProviderEx;
-import xades4j.providers.impl.DirectPasswordProvider;
-import xades4j.providers.impl.FirstCertificateSelector;
-import xades4j.providers.impl.PKCS11KeyStoreKeyingDataProvider;
-import sun.security.pkcs11.wrapper.PKCS11;
-import sun.security.pkcs11.wrapper.PKCS11Constants;
 import sun.security.pkcs11.SunPKCS11;
 
 @Component
@@ -48,7 +34,6 @@ public class EtaxToken {
 	private Certificate[] certificateChain;
 	private KeyStore keyStore;
 	private String providerName;
-	private XadesSigner xadesSigner;
 	private KeyStore.PrivateKeyEntry keyStorePrivateKeyEntry;
 	private X509Certificate x509Certificate;
 	private AuthProvider authProvider;
@@ -113,14 +98,6 @@ public class EtaxToken {
 		this.etaxProperties = etaxProperties;
 	}
 
-	public XadesSigner getXadesSigner() {
-		return xadesSigner;
-	}
-
-	public void setXadesSigner(XadesSigner xadesSigner) {
-		this.xadesSigner = xadesSigner;
-	}
-
 	public String getProviderName() {
 		return providerName;
 	}
@@ -167,55 +144,30 @@ public class EtaxToken {
 			cfg.append("CKM_SHA1_RSA_PKCS");
 			cfg.append(System.getProperty("line.separator"));
 			cfg.append("}");
-//			log.info(cfg.toString());
 			InputStream isCfg = new ByteArrayInputStream(cfg.toString().getBytes());
 			Provider p = new SunPKCS11(isCfg);
+			p.setProperty("pkcs11LibraryPath", lib);
 			Security.addProvider(p);
-//			PKCS11 pkcs11 = PKCS11.getInstance(((SunPKCS11) p).getProperty(lib),
-//					null, null, true);
-//			pkcs11.C_Finalize(PKCS11Constants.NULL_PTR);
-			providerName = p.getName();
 			keyStore = KeyStore.getInstance(type, p);
 			keyStore.load(null, password.toCharArray());
+			
+//			PKCS11 pkcs11 = PKCS11.getInstance(((sun.security.pkcs11.SunPKCS11) p).getProperty("pkcs11LibraryPath"),
+//					null, null, true);
+//			log.info("Set C_Finalize");
+//			pkcs11.
+//			pkcs11.C_Finalize(PKCS11Constants.NULL_PTR);
+			
+			providerName = p.getName();
 			authProvider = (AuthProvider) keyStore.getProvider();
-			authProvider.login(new Subject(), new PasswordCallBackHandler());
-			log.info(authProvider.getName() + " Login success!!");
 			String alias = keyStore.aliases().nextElement();
-//			log.info("Alias : " + alias);
 			privateKey = (PrivateKey) keyStore.getKey(alias, password.toCharArray());
-//			log.info("Algorithm : " + privateKey.getAlgorithm());
 			certificateChain = keyStore.getCertificateChain(alias);
 			certificate = keyStore.getCertificate(alias);
-//			log.info(certificate.toString());
 			keyStorePrivateKeyEntry = (KeyStore.PrivateKeyEntry) keyStore.getEntry(alias,
 					new KeyStore.PasswordProtection(password.toCharArray()));
 			x509Certificate = (X509Certificate) keyStorePrivateKeyEntry.getCertificate();
-			// XML
-//			AlgorithmsProviderEx ap = new DefaultAlgorithmsProviderEx();
-//			KeyingDataProvider keyingProvider = new PKCS11KeyStoreKeyingDataProvider(lib, providername,
-//					Integer.parseInt(slot), new FirstCertificateSelector(), new DirectPasswordProvider(password), null,
-//					false);
-//			XadesSigningProfile xadesSigningProfile = new XadesBesSigningProfile(keyingProvider);
-//			xadesSigningProfile.withAlgorithmsProviderEx(ap);
-//			xadesSigner = xadesSigningProfile.newSigner();
-//			List<X509Certificate> lstX509Cert = keyingProvider.getSigningCertificateChain();
-//			for(int i = 0 ; i <= lstX509Cert.size();i++) {
-//				X509Certificate certificate = lstX509Cert.get(i);
-//				log.info(certificate.toString());
-//			}
 		} else {
 			throw new Exception("PK Type Not support");
-		}
-	}
-	
-	@PreDestroy
-	public void shutdown(){
-		try {
-			authProvider.logout();
-			log.info(authProvider.getName() + " Logout success!!");
-		} catch (LoginException e) {
-			// TODO Auto-generated catch block
-			log.error(e.getMessage());
 		}
 	}
 

@@ -41,8 +41,6 @@ import javax.xml.transform.stream.StreamResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 
 import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.pdf.PdfReader;
@@ -61,16 +59,12 @@ import com.itextpdf.text.pdf.security.OcspClient;
 import com.itextpdf.text.pdf.security.OcspClientBouncyCastle;
 import com.itextpdf.text.pdf.security.PrivateKeySignature;
 import com.itextpdf.text.pdf.security.TSAClientBouncyCastle;
-//import com.zygen.etax.sats.DssHelper;
 //import com.zygen.etax.sats.TSAClient;
 import com.zygen.etax.util.EtaxFileService;
-
-import xades4j.production.XadesSigner;
 
 public class EtaxSigner {
 
 	private static final Logger log = LoggerFactory.getLogger(EtaxSigner.class);
-//	private XadesSigner xadesSigner;
 	private PrivateKey privateKey;
 	private Certificate certificate;
 	private TSAClient tsaClient;
@@ -100,10 +94,6 @@ public class EtaxSigner {
 		this.keyStore = keyStore;
 	}
 
-//	public void setXadesSigner(XadesSigner xadesSigner) {
-//		this.xadesSigner = xadesSigner;
-//	}
-
 	public void setProvidername(String providername) {
 		this.providername = providername;
 	}
@@ -127,17 +117,6 @@ public class EtaxSigner {
 			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 			dbf.setNamespaceAware(true);
 			Document sourceDoc = dbf.newDocumentBuilder().parse(inputXml);
-//			Element elementToSign = sourceDoc.getDocumentElement();
-//			if (elementToSign.hasAttribute("Id")) {
-//				refUri = '#' + elementToSign.getAttribute("Id");
-//			} else {
-//				if (elementToSign.getParentNode().getNodeType() != Node.DOCUMENT_NODE) {
-//					outputStream.close();
-//					EtaxFileService.deleteTempFile(tempPath);
-//					throw new IllegalArgumentException("Element without Id must be the document root");
-//				}
-//				refUri = "";
-//			}
 			XMLSignatureFactory fac = XMLSignatureFactory.getInstance("DOM");
 			Reference ref = fac.newReference("", fac.newDigestMethod(DigestMethod.SHA1, null),
 					Collections.singletonList(fac.newTransform(Transform.ENVELOPED, (TransformParameterSpec) null)),
@@ -151,20 +130,11 @@ public class EtaxSigner {
 			x509Content.add(x509Certificate);
 			X509Data xd = kif.newX509Data(x509Content);
 			KeyInfo ki = kif.newKeyInfo(Collections.singletonList(xd));
-//			KeyStore.PrivateKeyEntry keyEntry = keyStore.getEntry(alias, protParam)
-//			DataObjectDesc dataObjRef = new DataObjectReference(refUri)
-//					.withTransform(new EnvelopedSignatureTransform());
-//			log.info("Create Signer Data Object");
-//			XadesSignatureResult result = xadesSigner.sign(new SignedDataObjects(dataObjRef),
-//					sourceDoc.getDocumentElement());
 			log.info("Get XML Signature");
-//			XMLSignature signature = result.getSignature();
 			DOMSignContext dsc = new DOMSignContext(keyStorePrivateKeyEntry.getPrivateKey(), sourceDoc.getDocumentElement());
 			log.info("Sign XML Signature");
 			XMLSignature signature = fac.newXMLSignature(si, ki);
 			signature.sign(dsc);
-//			Document docs = signature.getDocument();
-//			XMLUtils.outputDOM(docs, outputStream);
 			log.info("XML Transformer to output");
 			TransformerFactory tf = TransformerFactory.newInstance();
 			Transformer trans = tf.newTransformer();
