@@ -71,6 +71,9 @@ public class EtaxRepository {
 	}
 
 	public void callAgentGetXml(String xmlContent) {
+		
+		etaxToken.reconnect();
+
 		log.info("Request Key : " + key + " CallAgentGetXml");
 		signXmlResponse = factory.createSignXmlResponse();
 		try {
@@ -90,6 +93,7 @@ public class EtaxRepository {
 	}
 
 	public void callAgentGetPdf(String pdfContent) {
+		etaxToken.reconnect();
 		log.info("callAgentGetPdf");
 		signPdfResponse = factory.createSignPdfResponse();
 		String pdfPath = etaxProperties.getTemp_file_path() + key + "_pd.pdf";

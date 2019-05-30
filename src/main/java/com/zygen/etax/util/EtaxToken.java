@@ -37,6 +37,8 @@ public class EtaxToken {
 	private KeyStore.PrivateKeyEntry keyStorePrivateKeyEntry;
 	private X509Certificate x509Certificate;
 	private AuthProvider authProvider;
+	private Provider p;
+	private String alias;
 
 	@Autowired
 	private EtaxProperties etaxProperties;
@@ -145,7 +147,8 @@ public class EtaxToken {
 			cfg.append(System.getProperty("line.separator"));
 			cfg.append("}");
 			InputStream isCfg = new ByteArrayInputStream(cfg.toString().getBytes());
-			Provider p = new SunPKCS11(isCfg);
+			//Provider p = new SunPKCS11(isCfg);
+			p = new SunPKCS11(isCfg);
 			p.setProperty("pkcs11LibraryPath", lib);
 			Security.addProvider(p);
 			keyStore = KeyStore.getInstance(type, p);
@@ -159,7 +162,8 @@ public class EtaxToken {
 			
 			providerName = p.getName();
 			authProvider = (AuthProvider) keyStore.getProvider();
-			String alias = keyStore.aliases().nextElement();
+			//String alias = keyStore.aliases().nextElement();
+			alias = keyStore.aliases().nextElement();
 			privateKey = (PrivateKey) keyStore.getKey(alias, password.toCharArray());
 			certificateChain = keyStore.getCertificateChain(alias);
 			certificate = keyStore.getCertificate(alias);
@@ -182,6 +186,41 @@ public class EtaxToken {
 			pc.setPassword(etaxProperties.getCs11_password().toCharArray());
 		}
 
+	}
+	
+	public void reconnect() {
+		
+		try {
+			privateKey = (PrivateKey) keyStore.getKey(alias, etaxProperties.getCs11_password().toCharArray());
+			//keyStore.getKey(alias, etaxProperties.getCs11_password().toCharArray());
+			if(privateKey == null) {
+				getConnection(etaxProperties.getCs11_provider_name(), etaxProperties.getCs11_slot_id(), 
+						      etaxProperties.getCs11_lib_path(), etaxProperties.getType(), 
+						      etaxProperties.getCs11_password());
+			}
+		} catch(Exception e) {
+			/*
+			try {
+				keyStore = KeyStore.getInstance(etaxProperties.getType(), p);
+				keyStore.load(null, etaxProperties.getCs11_password().toCharArray());
+				
+				providerName = p.getName();
+				authProvider = (AuthProvider) keyStore.getProvider();
+				//String alias = keyStore.aliases().nextElement();
+				alias = keyStore.aliases().nextElement();
+				privateKey = (PrivateKey) keyStore.getKey(alias, etaxProperties.getCs11_password().toCharArray());
+				certificateChain = keyStore.getCertificateChain(alias);
+				certificate = keyStore.getCertificate(alias);
+				keyStorePrivateKeyEntry = (KeyStore.PrivateKeyEntry) keyStore.getEntry(alias,
+						new KeyStore.PasswordProtection(etaxProperties.getCs11_password().toCharArray()));
+				x509Certificate = (X509Certificate) keyStorePrivateKeyEntry.getCertificate();
+				
+			} catch(Exception e1) {
+				log.error(e1.getMessage());
+			}
+			*/
+			log.error(e.getMessage());
+		}
 	}
 
 }
