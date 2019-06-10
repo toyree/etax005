@@ -10,7 +10,12 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
+import java.security.Provider;
+import java.security.UnrecoverableEntryException;
+import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -18,6 +23,8 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
 import javax.xml.crypto.dsig.CanonicalizationMethod;
 import javax.xml.crypto.dsig.DigestMethod;
 import javax.xml.crypto.dsig.Reference;
@@ -73,6 +80,8 @@ public class EtaxSigner {
 	private String providername;
 	private X509Certificate x509Certificate;
 	private KeyStore.PrivateKeyEntry keyStorePrivateKeyEntry;
+	private KeyGenerator keyGen;
+	private SecretKey desKey;
 
 	public void setPrivateKey(PrivateKey privateKey) {
 		this.privateKey = privateKey;
@@ -220,5 +229,52 @@ public class EtaxSigner {
 		return true;
 
 	}
+	
+   public void generateKeyStore( Provider p , String password , String key ) { 
+	  
+	   try {
+		keyGen = KeyGenerator.getInstance("DES", p);
+		keyGen.init(56);
+		desKey = keyGen.generateKey();
+		try {
+			keyStore.setKeyEntry( key, desKey , null, (java.security.cert.Certificate[]) null);
+			if (keyStore.containsAlias(key)) {
+				try {
+					privateKey = (PrivateKey) keyStore.getKey(key, password.toCharArray());
+				} catch (UnrecoverableKeyException e) {
+					// TODO Auto-generated catch block
+					log.error(e.getMessage());
+				}
+				certificateChain = keyStore.getCertificateChain(key);
+				certificate = keyStore.getCertificate(key);
+				try {
+					keyStorePrivateKeyEntry = (KeyStore.PrivateKeyEntry) keyStore.getEntry(key,
+							new KeyStore.PasswordProtection(password.toCharArray()));
+				} catch (UnrecoverableEntryException e) {
+					// TODO Auto-generated catch block
+					log.error(e.getMessage());
+				}
+				x509Certificate = (X509Certificate) keyStorePrivateKeyEntry.getCertificate();
+			}
+		} catch (KeyStoreException e) {
+			// TODO Auto-generated catch block
+			log.error(e.getMessage());
+		}
+		
+	} catch (NoSuchAlgorithmException e) {
+		// TODO Auto-generated catch block
+		log.error(e.getMessage());
+	}
+	   
+   }
+   
+   public void deleteKeyEntry(String key) {
+	   try {
+		keyStore.deleteEntry(key);
+	} catch (KeyStoreException e) {
+		// TODO Auto-generated catch block
+		log.error(e.getMessage());
+	}
+   }
 
 }

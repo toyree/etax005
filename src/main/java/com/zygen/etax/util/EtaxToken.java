@@ -29,16 +29,16 @@ import sun.security.pkcs11.SunPKCS11;
 public class EtaxToken {
 
 	private static final Logger log = LoggerFactory.getLogger(EtaxToken.class);
-	private PrivateKey privateKey;
-	private Certificate certificate;
-	private Certificate[] certificateChain;
+//	private PrivateKey privateKey;
+//	private Certificate certificate;
+//	private Certificate[] certificateChain;
 	private KeyStore keyStore;
-	private String providerName;
-	private KeyStore.PrivateKeyEntry keyStorePrivateKeyEntry;
-	private X509Certificate x509Certificate;
-	private AuthProvider authProvider;
-	private Provider p;
-	private String alias;
+//	private String providerName;
+//	private KeyStore.PrivateKeyEntry keyStorePrivateKeyEntry;
+//	private X509Certificate x509Certificate;
+//	private AuthProvider authProvider;
+	private Provider provider;
+//	private String alias;
 
 	@Autowired
 	private EtaxProperties etaxProperties;
@@ -60,28 +60,12 @@ public class EtaxToken {
 		}
 	}
 
-	public PrivateKey getPrivateKey() {
-		return privateKey;
+	public EtaxProperties getEtaxProperties() {
+		return etaxProperties;
 	}
 
-	public void setPrivateKey(PrivateKey privateKey) {
-		this.privateKey = privateKey;
-	}
-
-	public Certificate getCertificate() {
-		return certificate;
-	}
-
-	public void setCertificate(Certificate certificate) {
-		this.certificate = certificate;
-	}
-
-	public Certificate[] getCertificateChain() {
-		return certificateChain;
-	}
-
-	public void setCertificateChain(Certificate[] certificateChain) {
-		this.certificateChain = certificateChain;
+	public void setEtaxProperties(EtaxProperties etaxProperties) {
+		this.etaxProperties = etaxProperties;
 	}
 
 	public KeyStore getKeyStore() {
@@ -91,45 +75,13 @@ public class EtaxToken {
 	public void setKeyStore(KeyStore keyStore) {
 		this.keyStore = keyStore;
 	}
-
-	public EtaxProperties getEtaxProperties() {
-		return etaxProperties;
+	
+	public Provider getProvider() {
+		return provider;
 	}
 
-	public void setEtaxProperties(EtaxProperties etaxProperties) {
-		this.etaxProperties = etaxProperties;
-	}
-
-	public String getProviderName() {
-		return providerName;
-	}
-
-	public void setProviderName(String providerName) {
-		this.providerName = providerName;
-	}
-
-	public KeyStore.PrivateKeyEntry getKeyStorePrivateKeyEntry() {
-		return keyStorePrivateKeyEntry;
-	}
-
-	public void setKeyStorePrivateKeyEntry(KeyStore.PrivateKeyEntry keyStorePrivateKeyEntry) {
-		this.keyStorePrivateKeyEntry = keyStorePrivateKeyEntry;
-	}
-
-	public X509Certificate getX509Certificate() {
-		return x509Certificate;
-	}
-
-	public void setX509Certificate(X509Certificate x509Certificate) {
-		this.x509Certificate = x509Certificate;
-	}
-
-	public AuthProvider getAuthProvider() {
-		return authProvider;
-	}
-
-	public void setAuthProvider(AuthProvider authProvider) {
-		this.authProvider = authProvider;
+	public void setProvider(Provider provider) {
+		this.provider = provider;
 	}
 
 	public void getConnection(String name, String slot, String lib, String type, String password) throws Exception {
@@ -148,19 +100,18 @@ public class EtaxToken {
 			cfg.append("}");
 			InputStream isCfg = new ByteArrayInputStream(cfg.toString().getBytes());
 			//Provider p = new SunPKCS11(isCfg);
-			p = new SunPKCS11(isCfg);
-			p.setProperty("pkcs11LibraryPath", lib);
-			Security.addProvider(p);
-			keyStore = KeyStore.getInstance(type, p);
+			provider = new SunPKCS11(isCfg);
+			provider.setProperty("pkcs11LibraryPath", lib);
+			Security.addProvider(provider);
+			keyStore = KeyStore.getInstance(type, provider);
 			keyStore.load(null, password.toCharArray());
-			
+
 //			PKCS11 pkcs11 = PKCS11.getInstance(((sun.security.pkcs11.SunPKCS11) p).getProperty("pkcs11LibraryPath"),
 //					null, null, true);
 //			log.info("Set C_Finalize");
 //			pkcs11.
 //			pkcs11.C_Finalize(PKCS11Constants.NULL_PTR);
-			
-			providerName = p.getName();
+/*
 			authProvider = (AuthProvider) keyStore.getProvider();
 			//String alias = keyStore.aliases().nextElement();
 			alias = keyStore.aliases().nextElement();
@@ -170,6 +121,7 @@ public class EtaxToken {
 			keyStorePrivateKeyEntry = (KeyStore.PrivateKeyEntry) keyStore.getEntry(alias,
 					new KeyStore.PasswordProtection(password.toCharArray()));
 			x509Certificate = (X509Certificate) keyStorePrivateKeyEntry.getCertificate();
+*/
 		} else {
 			throw new Exception("PK Type Not support");
 		}
@@ -186,41 +138,6 @@ public class EtaxToken {
 			pc.setPassword(etaxProperties.getCs11_password().toCharArray());
 		}
 
-	}
-	
-	public void reconnect() {
-		
-		try {
-			privateKey = (PrivateKey) keyStore.getKey(alias, etaxProperties.getCs11_password().toCharArray());
-			//keyStore.getKey(alias, etaxProperties.getCs11_password().toCharArray());
-			if(privateKey == null) {
-				getConnection(etaxProperties.getCs11_provider_name(), etaxProperties.getCs11_slot_id(), 
-						      etaxProperties.getCs11_lib_path(), etaxProperties.getType(), 
-						      etaxProperties.getCs11_password());
-			}
-		} catch(Exception e) {
-			/*
-			try {
-				keyStore = KeyStore.getInstance(etaxProperties.getType(), p);
-				keyStore.load(null, etaxProperties.getCs11_password().toCharArray());
-				
-				providerName = p.getName();
-				authProvider = (AuthProvider) keyStore.getProvider();
-				//String alias = keyStore.aliases().nextElement();
-				alias = keyStore.aliases().nextElement();
-				privateKey = (PrivateKey) keyStore.getKey(alias, etaxProperties.getCs11_password().toCharArray());
-				certificateChain = keyStore.getCertificateChain(alias);
-				certificate = keyStore.getCertificate(alias);
-				keyStorePrivateKeyEntry = (KeyStore.PrivateKeyEntry) keyStore.getEntry(alias,
-						new KeyStore.PasswordProtection(etaxProperties.getCs11_password().toCharArray()));
-				x509Certificate = (X509Certificate) keyStorePrivateKeyEntry.getCertificate();
-				
-			} catch(Exception e1) {
-				log.error(e1.getMessage());
-			}
-			*/
-			log.error(e.getMessage());
-		}
 	}
 
 }

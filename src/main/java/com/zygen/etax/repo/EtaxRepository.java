@@ -72,19 +72,20 @@ public class EtaxRepository {
 
 	public void callAgentGetXml(String xmlContent) {
 		
-		etaxToken.reconnect();
 
 		log.info("Request Key : " + key + " CallAgentGetXml");
 		signXmlResponse = factory.createSignXmlResponse();
 		try {
 			EtaxSigner etaxSigner = new EtaxSigner();
 			setInitialEtaxSigner(etaxSigner);
+			etaxSigner.generateKeyStore(etaxToken.getProvider(), etaxProperties.getCs11_password(), key);
 			xmlContent = StringEscapeUtils.unescapeHtml4(xmlContent);
 			InputStream inputXmlContent = new ByteArrayInputStream(xmlContent.getBytes(StandardCharsets.UTF_8));
 //			login();
 			signXmlResponse.setSignXmlResult(factory.createSignXmlRequestXmlContent((StringEscapeUtils.escapeXml10(
 					etaxSigner.signXML(inputXmlContent, etaxProperties.getTemp_file_path() + key + "_signed.xml")
 							.toString()))));
+			etaxSigner.deleteKeyEntry(key);
 //			logout();
 		} catch (Exception e) {
 			log.error(e.getMessage());
@@ -93,7 +94,6 @@ public class EtaxRepository {
 	}
 
 	public void callAgentGetPdf(String pdfContent) {
-		etaxToken.reconnect();
 		log.info("callAgentGetPdf");
 		signPdfResponse = factory.createSignPdfResponse();
 		String pdfPath = etaxProperties.getTemp_file_path() + key + "_pd.pdf";
@@ -104,9 +104,11 @@ public class EtaxRepository {
 			EtaxFileService.createTempFile(pdfPath, isPdfContent);
 			EtaxSigner etaxSigner = new EtaxSigner();
 			setInitialEtaxSigner(etaxSigner);
+			etaxSigner.generateKeyStore(etaxToken.getProvider(), etaxProperties.getCs11_password(), key);
 //			login();
 			signPdfResponse.setSignPdfResult(
 					factory.createSignPdfResponseSignPdfResult(etaxSigner.signPDF(pdfPath, signedPdfPath).toString()));
+			etaxSigner.deleteKeyEntry(key);
 //			logout();
 		} catch (Exception e) {
 			log.error(e.getMessage());
@@ -121,13 +123,17 @@ public class EtaxRepository {
 	}
 
 	private void setInitialEtaxSigner(EtaxSigner etaxSigner) {
+		
+		etaxSigner.setKeyStore(etaxToken.getKeyStore());
+/*
 		etaxSigner.setPrivateKey(etaxToken.getPrivateKey());
 		etaxSigner.setCertificate(etaxToken.getCertificate());
 		etaxSigner.setCertificateChain(etaxToken.getCertificateChain());
-		etaxSigner.setKeyStore(etaxToken.getKeyStore());
+		
 		etaxSigner.setProvidername(etaxToken.getProviderName());
 		etaxSigner.setX509Certificate(etaxToken.getX509Certificate());
 		etaxSigner.setKeyStorePrivateKeyEntry(etaxToken.getKeyStorePrivateKeyEntry());
+*/
 	}
 	
 	private void login() throws LoginException {
