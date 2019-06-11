@@ -85,6 +85,7 @@ public class EtaxToken {
 	}
 
 	public void getConnection(String name, String slot, String lib, String type, String password) throws Exception {
+
 		if (type.contains("PKCS11")) {
 			StringBuilder cfg = new StringBuilder();
 			cfg.append("name=" + name);
@@ -103,6 +104,12 @@ public class EtaxToken {
 			provider = new SunPKCS11(isCfg);
 			provider.setProperty("pkcs11LibraryPath", lib);
 			Security.addProvider(provider);
+		    Provider[] providerList = Security.getProviders();
+		    for (int i = 0; i < providerList.length; i++) {
+		     log.info("[" + (i + 1) + "] - Provider name: " + providerList[i].getName());
+		     log.info("Provider version number: " + providerList[i].getVersion());
+		     log.info("Provider information:\n" + providerList[i].getInfo());
+		    }
 			keyStore = KeyStore.getInstance(type, provider);
 			keyStore.load(null, password.toCharArray());
 

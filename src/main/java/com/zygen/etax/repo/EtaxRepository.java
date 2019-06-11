@@ -71,24 +71,22 @@ public class EtaxRepository {
 	}
 
 	public void callAgentGetXml(String xmlContent) {
-		
 
 		log.info("Request Key : " + key + " CallAgentGetXml");
 		signXmlResponse = factory.createSignXmlResponse();
+		EtaxSigner etaxSigner = new EtaxSigner();
+		setInitialEtaxSigner(etaxSigner);
 		try {
-			EtaxSigner etaxSigner = new EtaxSigner();
-			setInitialEtaxSigner(etaxSigner);
 			etaxSigner.generateKeyStore(etaxToken.getProvider(), etaxProperties.getCs11_password(), key);
 			xmlContent = StringEscapeUtils.unescapeHtml4(xmlContent);
 			InputStream inputXmlContent = new ByteArrayInputStream(xmlContent.getBytes(StandardCharsets.UTF_8));
-//			login();
 			signXmlResponse.setSignXmlResult(factory.createSignXmlRequestXmlContent((StringEscapeUtils.escapeXml10(
 					etaxSigner.signXML(inputXmlContent, etaxProperties.getTemp_file_path() + key + "_signed.xml")
 							.toString()))));
-			etaxSigner.deleteKeyEntry(key);
-//			logout();
 		} catch (Exception e) {
 			log.error(e.getMessage());
+		} finally {
+//			etaxSigner.deleteKeyEntry(key);
 		}
 		signXmlResponse.setKey(factory.createSignXmlResponseKey(key));
 	}
@@ -98,64 +96,44 @@ public class EtaxRepository {
 		signPdfResponse = factory.createSignPdfResponse();
 		String pdfPath = etaxProperties.getTemp_file_path() + key + "_pd.pdf";
 		String signedPdfPath = etaxProperties.getTemp_file_path() + key + "_signedpd.pdf";
+
+		byte[] pdfByte = Base64.getDecoder().decode(pdfContent.getBytes());
+		InputStream isPdfContent = new ByteArrayInputStream(pdfByte);
+		EtaxSigner etaxSigner = new EtaxSigner();
 		try {
-			byte[] pdfByte = Base64.getDecoder().decode(pdfContent.getBytes());
-			InputStream isPdfContent = new ByteArrayInputStream(pdfByte);
 			EtaxFileService.createTempFile(pdfPath, isPdfContent);
-			EtaxSigner etaxSigner = new EtaxSigner();
 			setInitialEtaxSigner(etaxSigner);
 			etaxSigner.generateKeyStore(etaxToken.getProvider(), etaxProperties.getCs11_password(), key);
-//			login();
 			signPdfResponse.setSignPdfResult(
 					factory.createSignPdfResponseSignPdfResult(etaxSigner.signPDF(pdfPath, signedPdfPath).toString()));
 			etaxSigner.deleteKeyEntry(key);
-//			logout();
 		} catch (Exception e) {
 			log.error(e.getMessage());
-		}
-		try {
-			EtaxFileService.deleteTempFile(pdfPath);
-		} catch (IOException e) {
-			log.error(e.getMessage());
+		} finally {
+//			etaxSigner.deleteKeyEntry(key);
+			try {
+				EtaxFileService.deleteTempFile(pdfPath);
+			} catch (IOException e) {
+				log.error(e.getMessage());
+			}
 		}
 		signPdfResponse.setKey(factory.createSignPdfResponseKey(this.key));
 
 	}
 
 	private void setInitialEtaxSigner(EtaxSigner etaxSigner) {
-		
+
 		etaxSigner.setKeyStore(etaxToken.getKeyStore());
-/*
-		etaxSigner.setPrivateKey(etaxToken.getPrivateKey());
-		etaxSigner.setCertificate(etaxToken.getCertificate());
-		etaxSigner.setCertificateChain(etaxToken.getCertificateChain());
-		
-		etaxSigner.setProvidername(etaxToken.getProviderName());
-		etaxSigner.setX509Certificate(etaxToken.getX509Certificate());
-		etaxSigner.setKeyStorePrivateKeyEntry(etaxToken.getKeyStorePrivateKeyEntry());
-*/
+		/*
+		 * etaxSigner.setPrivateKey(etaxToken.getPrivateKey());
+		 * etaxSigner.setCertificate(etaxToken.getCertificate());
+		 * etaxSigner.setCertificateChain(etaxToken.getCertificateChain());
+		 * 
+		 * etaxSigner.setProvidername(etaxToken.getProviderName());
+		 * etaxSigner.setX509Certificate(etaxToken.getX509Certificate());
+		 * etaxSigner.setKeyStorePrivateKeyEntry(etaxToken.getKeyStorePrivateKeyEntry())
+		 * ;
+		 */
 	}
-	
-	private void login() throws LoginException {
-//		etaxToken.getAuthProvider().login(new Subject(), new PasswordCallBackHandler());
-//		log.info(etaxToken.getAuthProvider().getName() + " Login success!!");
-	}
-	
-	private void logout() throws LoginException {
-//		etaxToken.getAuthProvider().logout();
-//		log.info(etaxToken.getAuthProvider().getName() + " Logout success!!");
-	}
-	
-//	public class PasswordCallBackHandler implements CallbackHandler {
-//
-//		@Override
-//		public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
-//			if (!(callbacks[0] instanceof PasswordCallback)) {
-//				throw new UnsupportedCallbackException(callbacks[0]);
-//			}
-//			PasswordCallback pc = (PasswordCallback) callbacks[0];
-//			pc.setPassword(etaxProperties.getCs11_password().toCharArray());
-//		}
-//
-//	}
+
 }
