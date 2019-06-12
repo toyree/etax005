@@ -2,14 +2,12 @@ package com.zygen.etax.util;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.security.AuthProvider;
 import java.security.KeyStore;
-import java.security.PrivateKey;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.Security;
-import java.security.cert.Certificate;
-import java.security.cert.X509Certificate;
+import java.security.cert.CertificateException;
 
 import javax.annotation.PostConstruct;
 import javax.security.auth.callback.Callback;
@@ -32,12 +30,12 @@ public class EtaxToken {
 //	private PrivateKey privateKey;
 //	private Certificate certificate;
 //	private Certificate[] certificateChain;
-	private KeyStore keyStore;
+	private static KeyStore keyStore;
 //	private String providerName;
 //	private KeyStore.PrivateKeyEntry keyStorePrivateKeyEntry;
 //	private X509Certificate x509Certificate;
 //	private AuthProvider authProvider;
-	private Provider provider;
+	private static Provider provider;
 //	private String alias;
 
 	@Autowired
@@ -75,7 +73,7 @@ public class EtaxToken {
 	public void setKeyStore(KeyStore keyStore) {
 		this.keyStore = keyStore;
 	}
-	
+
 	public Provider getProvider() {
 		return provider;
 	}
@@ -84,7 +82,8 @@ public class EtaxToken {
 		this.provider = provider;
 	}
 
-	public void getConnection(String name, String slot, String lib, String type, String password) throws Exception {
+	public static void getConnection(String name, String slot, String lib, String type, String password)
+			throws Exception {
 
 		if (type.contains("PKCS11")) {
 			StringBuilder cfg = new StringBuilder();
@@ -94,41 +93,50 @@ public class EtaxToken {
 			cfg.append(System.getProperty("line.separator"));
 			cfg.append("library=" + lib);
 			cfg.append(System.getProperty("line.separator"));
+			cfg.append("description=Luna config");
+			cfg.append(System.getProperty("line.separator"));
+			cfg.append("attributes(*,*,*)= { CKA_TOKEN = true }");
+			cfg.append(System.getProperty("line.separator"));
+			cfg.append(
+					"attributes(*,CKO_SECRET_KEY,*)= { CKA_CLASS=4 CKA_PRIVATE= true CKA_KEY_TYPE = 21 CKA_SENSITIVE= true CKA_ENCRYPT= true CKA_DECRYPT= true CKA_WRAP= true CKA_UNWRAP= true }");
+			cfg.append(System.getProperty("line.separator"));
+			cfg.append(
+					"attributes(*,CKO_PRIVATE_KEY,*)= { CKA_CLASS=3 CKA_LABEL=true CKA_PRIVATE = true CKA_DECRYPT=true CKA_SIGN=true CKA_UNWRAP=true }");
+			cfg.append(System.getProperty("line.separator"));
+			cfg.append(
+					"attributes(*,CKO_PUBLIC_KEY,*)= { CKA_CLASS=2 CKA_LABEL=true CKA_ENCRYPT = true CKA_VERIFY=true CKA_WRAP=true }");
+			cfg.append(System.getProperty("line.separator"));
 			cfg.append("disabledMechanisms = {");
 			cfg.append(System.getProperty("line.separator"));
 			cfg.append("CKM_SHA1_RSA_PKCS");
 			cfg.append(System.getProperty("line.separator"));
 			cfg.append("}");
-			InputStream isCfg = new ByteArrayInputStream(cfg.toString().getBytes());
-			//Provider p = new SunPKCS11(isCfg);
+			ByteArrayInputStream isCfg = new ByteArrayInputStream(cfg.toString().getBytes());
 			provider = new SunPKCS11(isCfg);
 			provider.setProperty("pkcs11LibraryPath", lib);
 			Security.addProvider(provider);
-		    Provider[] providerList = Security.getProviders();
-		    for (int i = 0; i < providerList.length; i++) {
-		     log.info("[" + (i + 1) + "] - Provider name: " + providerList[i].getName());
-		     log.info("Provider version number: " + providerList[i].getVersion());
-		     log.info("Provider information:\n" + providerList[i].getInfo());
-		    }
-			keyStore = KeyStore.getInstance(type, provider);
-			keyStore.load(null, password.toCharArray());
+			try {
+				log.info("Loading KeyStore");
+				keyStore = KeyStore.getInstance(type);
+				keyStore.load(null, password.toCharArray());
+			} catch (KeyStoreException e) {
+				log.error(e.getMessage());
+			} catch (IOException e) {
+				log.error(e.getMessage());
+			} catch (NoSuchAlgorithmException e) {
+				log.error(e.getMessage());
+			} catch (CertificateException e) {
+				log.error(e.getMessage());
+			}
 
-//			PKCS11 pkcs11 = PKCS11.getInstance(((sun.security.pkcs11.SunPKCS11) p).getProperty("pkcs11LibraryPath"),
-//					null, null, true);
-//			log.info("Set C_Finalize");
-//			pkcs11.
-//			pkcs11.C_Finalize(PKCS11Constants.NULL_PTR);
-/*
-			authProvider = (AuthProvider) keyStore.getProvider();
-			//String alias = keyStore.aliases().nextElement();
-			alias = keyStore.aliases().nextElement();
-			privateKey = (PrivateKey) keyStore.getKey(alias, password.toCharArray());
-			certificateChain = keyStore.getCertificateChain(alias);
-			certificate = keyStore.getCertificate(alias);
-			keyStorePrivateKeyEntry = (KeyStore.PrivateKeyEntry) keyStore.getEntry(alias,
-					new KeyStore.PasswordProtection(password.toCharArray()));
-			x509Certificate = (X509Certificate) keyStorePrivateKeyEntry.getCertificate();
-*/
+			/*
+			 * Provider[] providerList = Security.getProviders(); for (int i = 0; i <
+			 * providerList.length; i++) { log.info("[" + (i + 1) + "] - Provider name: " +
+			 * providerList[i].getName()); log.info("Provider version number: " +
+			 * providerList[i].getVersion()); log.info("Provider information:\n" +
+			 * providerList[i].getInfo()); }
+			 */
+
 		} else {
 			throw new Exception("PK Type Not support");
 		}

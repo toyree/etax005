@@ -246,37 +246,15 @@ public class EtaxSigner {
 			break;
 		}
 		log.info("Alias : " + alias);
-//		keyGen = KeyGenerator.getInstance("DES", p);
-//		keyGen.init(56);
-		/*
-		 * keyPairGen = KeyPairGenerator.getInstance("DES", p); SecureRandom random =
-		 * SecureRandom.getInstance("DES", p); keyPairGen.initialize(1024,random);
-		 * KeyPair keyPair = keyPairGen.generateKeyPair(); privateKey =
-		 * keyPair.getPrivate(); keyStore.setKeyEntry(key, privateKey, null,
-		 * (java.security.cert.Certificate[]) null);
-		 */
 		if (keyStore.containsAlias(alias)) {
 			certificateChain = keyStore.getCertificateChain(alias);
 			certificate = keyStore.getCertificate(alias);
-			log.info("Cert. : " + certificate.toString());
-			log.info("getKeyStorePrivateKeyEntry");
 			privateKey = (PrivateKey) keyStore.getKey(alias, password.toCharArray());
-			log.info("Algorithm : " + privateKey.getAlgorithm());
 			keyStorePrivateKeyEntry = (KeyStore.PrivateKeyEntry) keyStore.getEntry(alias,
 					new KeyStore.PasswordProtection(password.toCharArray()));
 			x509Certificate = (X509Certificate) keyStorePrivateKeyEntry.getCertificate();
 		}
 
-	}
-
-	public void deleteKeyEntry(String key) {
-		try {
-			log.info("deleteKeyEntry");
-			keyStore.deleteEntry(key);
-		} catch (KeyStoreException e) {
-			// TODO Auto-generated catch block
-			log.error(e.getMessage());
-		}
 	}
 
 }
