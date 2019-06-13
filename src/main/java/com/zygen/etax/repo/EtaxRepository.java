@@ -69,9 +69,9 @@ public class EtaxRepository {
 		log.info("Request Key : " + key + " CallAgentGetXml");
 		signXmlResponse = factory.createSignXmlResponse();
 		EtaxSigner etaxSigner = new EtaxSigner();
-		setInitialEtaxSigner(etaxSigner);
 		try {
-			etaxSigner.generateKeyStore(etaxToken.getProvider(), etaxProperties.getCs11_password(), key);
+			etaxSigner.generateKeyStore(etaxToken.getProvider(), etaxProperties.getCs11_password(), key,
+					etaxProperties.getType());
 			xmlContent = StringEscapeUtils.unescapeHtml4(xmlContent);
 			InputStream inputXmlContent = new ByteArrayInputStream(xmlContent.getBytes(StandardCharsets.UTF_8));
 			signXmlResponse.setSignXmlResult(factory.createSignXmlRequestXmlContent((StringEscapeUtils.escapeXml10(
@@ -86,7 +86,7 @@ public class EtaxRepository {
 	}
 
 	public void callAgentGetPdf(String pdfContent) {
-		
+
 		log.info("callAgentGetPdf");
 		signPdfResponse = factory.createSignPdfResponse();
 		String pdfPath = etaxProperties.getTemp_file_path() + key + "_pd.pdf";
@@ -96,8 +96,8 @@ public class EtaxRepository {
 		EtaxSigner etaxSigner = new EtaxSigner();
 		try {
 			EtaxFileService.createTempFile(pdfPath, isPdfContent);
-			setInitialEtaxSigner(etaxSigner);
-			etaxSigner.generateKeyStore(etaxToken.getProvider(), etaxProperties.getCs11_password(), key);
+			etaxSigner.generateKeyStore(etaxToken.getProvider(), etaxProperties.getCs11_password(), key,
+					etaxProperties.getType());
 			signPdfResponse.setSignPdfResult(
 					factory.createSignPdfResponseSignPdfResult(etaxSigner.signPDF(pdfPath, signedPdfPath).toString()));
 		} catch (Exception e) {
@@ -113,8 +113,5 @@ public class EtaxRepository {
 
 	}
 
-	private void setInitialEtaxSigner(EtaxSigner etaxSigner) {
-		etaxSigner.setKeyStore(etaxToken.getKeyStore());
-	}
 
 }

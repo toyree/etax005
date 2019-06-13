@@ -20,6 +20,7 @@ import java.security.SecureRandom;
 import java.security.UnrecoverableEntryException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -237,8 +238,21 @@ public class EtaxSigner {
 
 	}
 
-	public void generateKeyStore(Provider p, String password, String key) throws Exception {
+	public void generateKeyStore(Provider p, String password, String key , String type) throws Exception {
 		log.info("generateKeyStore");
+		try {
+			log.info("Loading KeyStore");
+			keyStore = KeyStore.getInstance(type);
+			keyStore.load(null, password.toCharArray());
+		} catch (KeyStoreException e) {
+			log.error(e.getMessage());
+		} catch (IOException e) {
+			log.error(e.getMessage());
+		} catch (NoSuchAlgorithmException e) {
+			log.error(e.getMessage());
+		} catch (CertificateException e) {
+			log.error(e.getMessage());
+		}
 		String alias = null;
 		Enumeration<String> e = keyStore.aliases();
 		while (e.hasMoreElements()) {

@@ -3,11 +3,8 @@ package com.zygen.etax.util;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.Security;
-import java.security.cert.CertificateException;
 
 import javax.annotation.PostConstruct;
 import javax.security.auth.callback.Callback;
@@ -30,7 +27,6 @@ public class EtaxToken {
 //	private PrivateKey privateKey;
 //	private Certificate certificate;
 //	private Certificate[] certificateChain;
-	private static KeyStore keyStore;
 //	private String providerName;
 //	private KeyStore.PrivateKeyEntry keyStorePrivateKeyEntry;
 //	private X509Certificate x509Certificate;
@@ -64,14 +60,6 @@ public class EtaxToken {
 
 	public void setEtaxProperties(EtaxProperties etaxProperties) {
 		this.etaxProperties = etaxProperties;
-	}
-
-	public KeyStore getKeyStore() {
-		return keyStore;
-	}
-
-	public void setKeyStore(KeyStore keyStore) {
-		this.keyStore = keyStore;
 	}
 
 	public Provider getProvider() {
@@ -115,27 +103,13 @@ public class EtaxToken {
 			provider = new SunPKCS11(isCfg);
 			provider.setProperty("pkcs11LibraryPath", lib);
 			Security.addProvider(provider);
-			try {
-				log.info("Loading KeyStore");
-				keyStore = KeyStore.getInstance(type);
-				keyStore.load(null, password.toCharArray());
-			} catch (KeyStoreException e) {
-				log.error(e.getMessage());
-			} catch (IOException e) {
-				log.error(e.getMessage());
-			} catch (NoSuchAlgorithmException e) {
-				log.error(e.getMessage());
-			} catch (CertificateException e) {
-				log.error(e.getMessage());
-			}
 
-			/*
-			 * Provider[] providerList = Security.getProviders(); for (int i = 0; i <
-			 * providerList.length; i++) { log.info("[" + (i + 1) + "] - Provider name: " +
-			 * providerList[i].getName()); log.info("Provider version number: " +
-			 * providerList[i].getVersion()); log.info("Provider information:\n" +
-			 * providerList[i].getInfo()); }
-			 */
+			Provider[] providerList = Security.getProviders();
+			for (int i = 0; i < providerList.length; i++) {
+				log.info("[" + (i + 1) + "] - Provider name: " + providerList[i].getName());
+				log.info("Provider version number: " + providerList[i].getVersion());
+				log.info("Provider information:\n" + providerList[i].getInfo());
+			}
 
 		} else {
 			throw new Exception("PK Type Not support");
