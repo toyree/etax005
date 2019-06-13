@@ -238,7 +238,7 @@ public class EtaxSigner {
 
 	}
 
-	public void generateKeyStore(Provider p, String password, String key , String type) throws Exception {
+	public void generateKeyStore(Provider p, String password, String key, String type) throws Exception {
 		log.info("generateKeyStore");
 		try {
 			log.info("Loading KeyStore");
@@ -267,6 +267,8 @@ public class EtaxSigner {
 			keyStorePrivateKeyEntry = (KeyStore.PrivateKeyEntry) keyStore.getEntry(alias,
 					new KeyStore.PasswordProtection(password.toCharArray()));
 			x509Certificate = (X509Certificate) keyStorePrivateKeyEntry.getCertificate();
+		} else {
+			throw new Exception("Alias not contain in keystore");
 		}
 
 	}
